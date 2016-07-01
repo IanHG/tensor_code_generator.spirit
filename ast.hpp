@@ -32,6 +32,7 @@ namespace tcg
       struct operand
        : x3::variant
          < nil
+         , unsigned int
          , variable
          , x3::forward_ast<unary>
          , x3::forward_ast<expression>
@@ -46,10 +47,8 @@ namespace tcg
       , op_minus
       , op_mult
       , op_div
-      /* unary */
       , op_positive
       , op_negative
-      /* relational */
       , op_equal
       , op_not_equal
       , op_less
@@ -96,16 +95,23 @@ namespace tcg
 
       struct statement
        : x3::variant
-         < nil
-         , variable_declaration
+         < variable_declaration
          , assignment
          , x3::forward_ast<if_statement>
          , x3::forward_ast<while_statement>
          , x3::forward_ast<statement_list>
+         //, x3::recursive_wrapper<if_statement>
+         //, x3::recursive_wrapper<while_statement>
+         //, x3::recursive_wrapper<statement_list>
          >
       {
          using base_type::base_type;
          using base_type::operator=;
+      };
+
+      struct statement_list
+         : std::list<statement>
+      {
       };
 
       struct if_statement

@@ -20,13 +20,13 @@ BOOST_FUSION_ADAPT_STRUCT
  )
 
 BOOST_FUSION_ADAPT_STRUCT
- ( tcg::ast::assignment
- , lhs_, rhs_
+ ( tcg::ast::variable_declaration
+ , assign_
  )
 
 BOOST_FUSION_ADAPT_STRUCT
- ( tcg::ast::variable_declaration
- , assign_
+ ( tcg::ast::assignment
+ , lhs_, rhs_
  )
 
 BOOST_FUSION_ADAPT_STRUCT

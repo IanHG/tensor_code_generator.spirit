@@ -6,6 +6,8 @@
 #include "ast.hpp"
 #include "ast_adapted.hpp"
 #include "expression.hpp"
+#include "identifier.hpp"
+#include "error_handler.hpp"
 
 namespace tcg
 {
@@ -43,8 +45,8 @@ namespace tcg
          
          // unary operators
          unary_op.add
-            ("+", ast::positive)
-            ("-", ast::negative)
+            ("+", ast::op_positive)
+            ("-", ast::op_negative)
             ;
 
          //
@@ -63,7 +65,7 @@ namespace tcg
       struct primary_expr_class;
 
       using additive_expr_type = x3::rule<additive_expr_class, ast::expression>;
-      using mutilplicative_expr_type = x3::rule<multiplicative_expr_class, ast::expression>;
+      using multiplicative_expr_type = x3::rule<multiplicative_expr_class, ast::expression>;
       using unary_expr_type = x3::rule<unary_expr_class, ast::operand>;
       using primary_expr_type = x3::rule<primary_expr_class, ast::operand>;
 
@@ -85,11 +87,11 @@ namespace tcg
        ;
 
       const auto unary_expr_def
-       = primay_expr
-       | (unary_op primary_expr)
+       = primary_expr
+       | (unary_op > primary_expr)
        ;
 
-      const auto primary_expr
+      const auto primary_expr_def
        = x3::uint_
        | (!keywords >> identifier)
        | "(" > expression > ")"

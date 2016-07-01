@@ -1,9 +1,9 @@
 OBJ=main.cpp
-FUNC=
+FUNC=expression.cpp
 CXX=g++
 CXXOPTIMFLAGS=-O3
 CXXDEBUGFLAGS=-g -O0
-LIBS=-pthread
+LIBS=-pthread -lboost_system
 
 
 gcc: $(OBJ) $(FUNC)
