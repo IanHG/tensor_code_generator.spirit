@@ -25,7 +25,7 @@ namespace tcg
       
       struct variable: x3::position_tagged
       {
-         variable(const std::string& name): name_(name) {};
+         variable(const std::string& name = ""): name_(name) {};
          std::string name_ = "";
       };
       
@@ -55,6 +55,9 @@ namespace tcg
       , op_less_equal
       , op_greater
       , op_greater_equal
+      , op_and
+      , op_or
+      , op_not
       };
 
       struct unary
@@ -100,9 +103,9 @@ namespace tcg
          , x3::forward_ast<if_statement>
          , x3::forward_ast<while_statement>
          , x3::forward_ast<statement_list>
-         //, x3::recursive_wrapper<if_statement>
-         //, x3::recursive_wrapper<while_statement>
-         //, x3::recursive_wrapper<statement_list>
+         //, boost::recursive_wrapper<if_statement>
+         //, boost::recursive_wrapper<while_statement>
+         //, boost::recursive_wrapper<statement_list>
          >
       {
          using base_type::base_type;

@@ -1,5 +1,5 @@
 OBJ=main.cpp
-FUNC=expression.cpp
+FUNC=expression.cpp statement.cpp
 CXX=g++
 CXXOPTIMFLAGS=-O3
 CXXDEBUGFLAGS=-g -O0

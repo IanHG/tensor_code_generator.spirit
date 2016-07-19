@@ -1,0 +1,5 @@
+/*
+ * this is also a comment
+ */
+a= b + c; // this is a comment
+b = true;
