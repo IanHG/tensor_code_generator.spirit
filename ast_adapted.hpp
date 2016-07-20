@@ -5,6 +5,11 @@
 #include <boost/fusion/include/adapt_struct.hpp>
 
 BOOST_FUSION_ADAPT_STRUCT
+ ( tcg::ast::tensor_litteral
+ , name_, indices_
+ )
+
+BOOST_FUSION_ADAPT_STRUCT
  ( tcg::ast::unary
  , operator_, operand_
  )

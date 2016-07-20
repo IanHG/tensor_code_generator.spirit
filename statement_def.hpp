@@ -7,7 +7,7 @@
 #include "ast_adapted.hpp"
 #include "statement.hpp"
 #include "expression.hpp"
-#include "identifier.hpp"
+#include "common.hpp"
 #include "error_handler.hpp"
 
 namespace tcg
@@ -22,13 +22,15 @@ namespace tcg
       struct assignment_class;
       struct variable_class;
       struct block_class;
+      struct if_statement_class;
       struct while_statement_class;
 
       using statement_list_type       = x3::rule<statement_list_class, ast::statement_list>;
       using variable_declaration_type = x3::rule<variable_declaration_class, ast::variable_declaration>;
       using assignment_type           = x3::rule<assignment_class, ast::assignment>;
-      using variable_type             = x3::rule<variable_class, ast::variable>;
-      using block_type                = x3::rule<block_class, ast::statement_list>;
+      using variable_type             = x3::rule<variable_class, ast::operand>;
+      using block_type                = x3::rule<block_class, ast::statement>;
+      using if_statement_type         = x3::rule<if_statement_class, ast::if_statement>;
       using while_statement_type      = x3::rule<while_statement_class, ast::while_statement>;
       
       statement_type const statement("statement");
@@ -37,13 +39,14 @@ namespace tcg
       assignment_type const assignment("assignment");
       variable_type const variable("variable");
       block_type const block("block");
+      if_statement_type const if_statement("if_statement");
       while_statement_type const while_statement("while_statement");
 
       // Import the expression rule
       namespace { auto const& expression = tcg::expression(); }
       
       auto const statement_list_def 
-       = +(while_statement | variable_declaration | assignment)
+       = +(while_statement | if_statement | variable_declaration | assignment)
        ;
 
       auto const variable_declaration_def
@@ -57,6 +60,17 @@ namespace tcg
        > expression
        > ';'
        ;
+      
+      auto const if_statement_def
+       = x3::lit("if")
+       > x3::lit("(")
+       > expression
+       > x3::lit(")")
+       > block
+       >> -( x3::lit("else")
+           > block
+           )
+       ;
 
       auto const while_statement_def
        = x3::lit("while")
@@ -68,11 +82,11 @@ namespace tcg
       
       auto const block_def
        = x3::lit("{")
-       > statement_list
+       > statement
        > x3::lit("}")
        ;
 
-      auto const variable_def = identifier;
+      auto const variable_def = tensor_litteral | identifier;
       auto const statement_def = statement_list;
       
       BOOST_SPIRIT_DEFINE
@@ -80,6 +94,7 @@ namespace tcg
        , statement_list
        , variable_declaration 
        , assignment
+       , if_statement
        , while_statement
        , block
        , variable

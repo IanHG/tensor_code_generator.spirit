@@ -42,19 +42,18 @@ int main()
       tcg::statement()
    ];
 
-   // skipper
-   //auto skip = boost::spirit::x3::ascii::space; //| boost::spirit::x3::lexeme["/*" >> boost::spirit::x3::char_ >> "*/"];
-   auto skip = tcg::parser::skipper; //| boost::spirit::x3::lexeme["/*" >> boost::spirit::x3::char_ >> "*/"];
-   
    // parse the input
    tcg::ast::statement_list ast;
-   bool success = phrase_parse(iter, end, parser, skip, ast);
+   bool success = phrase_parse(iter, end, parser, tcg::parser::skipper, ast);
    
    if(success && iter == end)
    {
       std::cout << " success!!" << std::endl;
-      tcg::code_gen::compiler c;
-      c.start(ast);
+      tcg::code_gen::compiler c(error_handler);
+      if(!c.start(ast))
+      {
+         std::cout << " Compilation failed " << std::endl;
+      }
    }
    else
    {

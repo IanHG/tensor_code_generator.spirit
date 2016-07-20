@@ -6,7 +6,7 @@
 #include "ast.hpp"
 #include "ast_adapted.hpp"
 #include "expression.hpp"
-#include "identifier.hpp"
+#include "common.hpp"
 #include "error_handler.hpp"
 
 namespace tcg
@@ -148,7 +148,8 @@ namespace tcg
        = x3::double_
        | x3::uint_
        | x3::bool_
-       | (!keywords >> identifier)
+       | (!keywords >> tensor_litteral) // tensor
+       | (!keywords >> identifier) // variable
        | "(" > expression > ")"
        ;
 

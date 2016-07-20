@@ -22,6 +22,12 @@ namespace tcg
        ***************************************************************************/
       struct unary;
       struct expression;
+
+      struct tensor_litteral: x3::position_tagged
+      {
+         std::string name_;
+         std::vector<char> indices_;
+      };
       
       struct variable: x3::position_tagged
       {
@@ -35,6 +41,7 @@ namespace tcg
          , unsigned int
          , bool
          , double
+         , tensor_litteral
          , variable
          , x3::forward_ast<unary>
          , x3::forward_ast<expression>
@@ -85,7 +92,8 @@ namespace tcg
        ***************************************************************************/
       struct assignment: x3::position_tagged
       {
-         variable lhs_;
+         //variable lhs_;
+         operand lhs_;
          expression rhs_;
       };
 
@@ -113,7 +121,7 @@ namespace tcg
          using base_type::base_type;
          using base_type::operator=;
       };
-
+      
       struct statement_list
          : std::list<statement>
       {

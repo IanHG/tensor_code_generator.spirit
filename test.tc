@@ -1,8 +1,4 @@
 /*
  * this is also a comment
  */
-while(a == 1) {
-   a = 2;
-}
-a= b + c; // this is a comment
-b = true;
+A[ij] = E[ij] * (B[ij] + C[ji]) * D[ij]; // this is a comment
