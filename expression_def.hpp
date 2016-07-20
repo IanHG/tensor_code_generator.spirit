@@ -96,22 +96,22 @@ namespace tcg
       struct unary_expr_class;
       struct primary_expr_class;
       
-      using equality_expr_type = x3::rule<equality_expr_class, ast::expression>;
-      using relational_expr_type = x3::rule<relational_expr_class, ast::expression>;
-      using logical_expr_type = x3::rule<logical_expr_class, ast::expression>;
-      using additive_expr_type = x3::rule<additive_expr_class, ast::expression>;
+      using equality_expr_type       = x3::rule<equality_expr_class, ast::expression>;
+      using relational_expr_type     = x3::rule<relational_expr_class, ast::expression>;
+      using logical_expr_type        = x3::rule<logical_expr_class, ast::expression>;
+      using additive_expr_type       = x3::rule<additive_expr_class, ast::expression>;
       using multiplicative_expr_type = x3::rule<multiplicative_expr_class, ast::expression>;
-      using unary_expr_type = x3::rule<unary_expr_class, ast::operand>;
-      using primary_expr_type = x3::rule<primary_expr_class, ast::operand>;
+      using unary_expr_type          = x3::rule<unary_expr_class, ast::operand>;
+      using primary_expr_type        = x3::rule<primary_expr_class, ast::operand>;
 
-      const expression_type expression = "expression";
-      const equality_expr_type equality_expr = "equality_expr";
+      const expression_type expression           = "expression";
+      const equality_expr_type equality_expr     = "equality_expr";
       const relational_expr_type relational_expr = "relational_expr";
-      const logical_expr_type logical_expr = "logical_expr";
-      const additive_expr_type additive_expr = "additive_expr";
+      const logical_expr_type logical_expr       = "logical_expr";
+      const additive_expr_type additive_expr     = "additive_expr";
       const multiplicative_expr_type multiplicative_expr = "multiplicative_expr";
-      const unary_expr_type unary_expr = "unary_expr";
-      const primary_expr_type primary_expr = "primary_expr";
+      const unary_expr_type unary_expr           = "unary_expr";
+      const primary_expr_type primary_expr       = "primary_expr";
       
       // define actual expression grammar
       const auto logical_expr_def
@@ -145,7 +145,8 @@ namespace tcg
        ;
 
       const auto primary_expr_def
-       = x3::uint_
+       = x3::double_
+       | x3::uint_
        | x3::bool_
        | (!keywords >> identifier)
        | "(" > expression > ")"

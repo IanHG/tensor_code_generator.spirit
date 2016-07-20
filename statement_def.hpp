@@ -21,25 +21,31 @@ namespace tcg
       struct variable_declaration_class;
       struct assignment_class;
       struct variable_class;
+      struct block_class;
+      struct while_statement_class;
 
       using statement_list_type       = x3::rule<statement_list_class, ast::statement_list>;
       using variable_declaration_type = x3::rule<variable_declaration_class, ast::variable_declaration>;
       using assignment_type           = x3::rule<assignment_class, ast::assignment>;
       using variable_type             = x3::rule<variable_class, ast::variable>;
+      using block_type                = x3::rule<block_class, ast::statement_list>;
+      using while_statement_type      = x3::rule<while_statement_class, ast::while_statement>;
       
       statement_type const statement("statement");
       statement_list_type const statement_list("statement_list");
       variable_declaration_type const variable_declaration("variable_declaration");
       assignment_type const assignment("assignment");
       variable_type const variable("variable");
+      block_type const block("block");
+      while_statement_type const while_statement("while_statement");
 
       // Import the expression rule
       namespace { auto const& expression = tcg::expression(); }
       
       auto const statement_list_def 
-       = +(variable_declaration | assignment)
+       = +(while_statement | variable_declaration | assignment)
        ;
-      
+
       auto const variable_declaration_def
        = x3::lexeme["var" >> !(x3::alnum | '_')] // make sure we have whole words
        > assignment
@@ -51,7 +57,21 @@ namespace tcg
        > expression
        > ';'
        ;
+
+      auto const while_statement_def
+       = x3::lit("while")
+       > x3::lit("(")
+       > expression
+       > x3::lit(")")
+       > block
+       ;
       
+      auto const block_def
+       = x3::lit("{")
+       > statement_list
+       > x3::lit("}")
+       ;
+
       auto const variable_def = identifier;
       auto const statement_def = statement_list;
       
@@ -60,6 +80,8 @@ namespace tcg
        , statement_list
        , variable_declaration 
        , assignment
+       , while_statement
+       , block
        , variable
        );  
       

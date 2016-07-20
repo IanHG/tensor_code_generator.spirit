@@ -7,6 +7,7 @@
 #include "ast.hpp"
 #include "config.hpp"
 #include "error_handler.hpp"
+#include "compiler.hpp"
 
 int main()
 {
@@ -52,6 +53,8 @@ int main()
    if(success && iter == end)
    {
       std::cout << " success!!" << std::endl;
+      tcg::code_gen::compiler c;
+      c.start(ast);
    }
    else
    {
