@@ -1,4 +1,4 @@
 /*
  * this is also a comment
  */
-A[ij] = E[ij] * (B[ij] + C[ji]) * D[ij]; // this is a comment
+A[ij] = (B[ik] + C[ki] + E[ik]) * D[kj]; // this is a comment

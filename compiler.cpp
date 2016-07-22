@@ -8,6 +8,62 @@ namespace tcg
    namespace code_gen
    {
       /***************************************************************************
+       * 
+       ***************************************************************************/
+      std::string tensor_intermed::create_guid()
+      {
+         static int i = 0;
+         return {"intermed" + std::to_string(++i)};
+      }
+
+      bool operator==(const tensor_intermed& t1, const tensor_intermed& t2)
+      {
+         return t1.guid_ == t2.guid_;
+      }
+
+      bool is_permutation(const multi_index_type& v1, const multi_index_type& v2)
+      {
+         if(v1.size() != v2.size()) return false;
+
+         for(const auto& c1 : v1)
+         {
+            bool found = false;
+            for(const auto& c2 : v2)
+            {
+               if(c1 == c2)
+               {
+                  found = true;
+                  break;
+               }
+            }
+            if(!found) return false;
+         }
+         return true;
+      }
+      
+      /***************************************************************************
+       * TAC program
+       ***************************************************************************/
+      void tac_program::op(ast::optoken op)
+      {
+         switch(op)
+         {
+            case ast::op_plus:
+            {
+               auto v1 = variable_stack_.top(); variable_stack_.pop();
+               auto v2 = variable_stack_.top(); variable_stack_.pop();
+               tac t(tensor_intermed::create_guid(), v1, v2, op);
+               break;
+            }
+            default: 
+            {
+               BOOST_ASSERT(0);
+               break;
+            }
+         }
+      }
+
+      /***************************************************************************
        * Compile expressions
        ***************************************************************************/
       /*!
@@ -84,7 +140,15 @@ namespace tcg
        */
       bool compiler::operator()(const ast::unary& x) const
       {
-         std::cout << " unary " << std::endl;
+         if (!boost::apply_visitor(*this, x.operand_))
+            return false;
+         switch (x.operator_)
+         {
+            case ast::op_negative: std::cout << " op_negative " << std::endl; break;
+            case ast::op_not: std::cout << " op_not " << std::endl; break;
+            case ast::op_positive: break;
+            default: BOOST_ASSERT(0); return false;
+         }
          return true;
       }
 
