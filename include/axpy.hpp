@@ -3,6 +3,13 @@
 
 #include <complex>
 
+/*!
+ * DAXPY constant times a vector plus a vector.
+ * 
+ * y := ax + y
+ *
+ * Uses unrolled loops for increments equal to one.
+ */
 //! single precision
 void saxpy(int*, float*, float*, int*, float*, int*);
 

@@ -1,5 +1,5 @@
 OBJ=main.cpp
-FUNC=expression.cpp statement.cpp compiler.cpp
+FUNC=expression.cpp statement.cpp compiler.cpp code_generator.cpp
 CXX=g++
 CXXFLAGS=-Wall
 CXXOPTIMFLAGS=-O3

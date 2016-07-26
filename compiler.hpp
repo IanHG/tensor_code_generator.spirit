@@ -19,44 +19,102 @@ namespace tcg
    {
       namespace x3 = boost::spirit::x3;
       using multi_index_type = std::vector<char>;
+      using permutation_type = std::vector<int>;
+
+      inline std::ostream& operator<<(std::ostream& os, const multi_index_type& m)
+      {
+         os << "[";
+         for(const auto& x : m)
+         {
+            os << x;
+         }
+         os << "]";
+         return os;
+      }
       /***************************************************************************
        * 
        ***************************************************************************/
-      struct tac_variable 
+      struct tac_variable
       {
-         std::string name_;
-         multi_index_type indices_;
-      };
-
-      struct tac 
-      {
-         tac
-            ( const std::string& name
-            , const tac_variable& lhs
-            , const tac_variable& rhs
-            , ast::optoken op
-            )
+         tac_variable(const std::string& name = "", const multi_index_type& indices = {}, char pflag = 't')
             : name_(name)
-            , lhs_(lhs)
-            , rhs_(rhs)
-            , op_(op)
+            , indices_(indices)
+            , pflag_(pflag)
          {
          }
 
          std::string name_;
-         tac_variable lhs_;
-         tac_variable rhs_;
-         ast::optoken op_;
+         multi_index_type indices_;
+         char utype_ = 'd'; // type flag: f (float), d (double), c (complex float), z (complex double)
+         char pflag_;       // persistence flag: p (persistent), t (temporary)
       };
 
-      struct tac_program: private std::list<tac>
+      inline bool is_temporary(const tac_variable& t)
+      {
+         return t.pflag_ == 't';
+      }
+
+      inline std::string type_as_string(const tac_variable& t)
+      {
+         switch(t.utype_)
+         {
+            case 'f': return "float";
+            case 'd': return "double";
+            case 'c': return "std::complex<float>";
+            case 'z': return "std::complex<double>";
+            default: BOOST_ASSERT(0);
+         }
+      }
+
+      inline std::ostream& operator<<(std::ostream& os, const tac_variable& t)
+      {
+         os << "<" << t.name_ << ":" << t.indices_ << ":" << "{" << t.utype_ << "," << t.pflag_ << "}" << ">";
+         return os;
+      }
+
+      struct tac 
+      {
+         tac
+            ( ast::optoken op
+            , const tac_variable& arg1
+            , const tac_variable& arg2
+            , const tac_variable& result
+            )
+            : op_(op)
+            , arg1_(arg1)
+            , arg2_(arg2)
+            , result_(result)
+         {
+         }
+
+         ast::optoken op_;
+         tac_variable arg1_;
+         tac_variable arg2_;
+         tac_variable result_;
+      };
+
+      inline std::ostream& operator<<(std::ostream& os, const tac& t)
+      {
+         os << t.result_ << " = " << t.arg1_ << " " << t.op_ << " " << t.arg2_;
+         return os;
+      }
+
+      struct tac_program: public std::list<tac>
       {
          void op(ast::optoken);
          void add_variable(const tac_variable& v) { variable_stack_.push(v); }
          
          //std::map<std::string, tensor_intermed> intermed_table_;
+
          std::stack<tac_variable> variable_stack_;
       };
+
+      inline std::ostream& operator<<(std::ostream& os, const tac_program& t)
+      {
+         for(const auto& x : t)
+            os << x << std::endl;
+         return os;
+      }
 
       struct tensor_intermed
       {
@@ -70,9 +128,17 @@ namespace tcg
 
       bool is_permutation(const multi_index_type&, const multi_index_type&);
 
-      multi_index_type overlap_indices(const multi_index_type&, const multi_index_type&);
+      multi_index_type find_overlapping_indices(const multi_index_type&, const multi_index_type&);
 
-      multi_index_type result_indices(const multi_index_type&, const multi_index_type&);
+      multi_index_type find_result_indices(const multi_index_type&, const multi_index_type&);
+
+      multi_index_type remove_indices(const multi_index_type&, const multi_index_type&);
+
+      multi_index_type catenate(const multi_index_type&, const multi_index_type&);
+
+      permutation_type find_permutation(const multi_index_type&, const multi_index_type&);
+
+      bool is_unit_permutation(const permutation_type&);
 
       /***************************************************************************
        * Compiler
@@ -117,9 +183,11 @@ namespace tcg
          //! constructor
          template<class ErrorHandler>
          compiler
-          ( const ErrorHandler& error_handler
+          ( tac_program& tac
+          , const ErrorHandler& error_handler
           )
-          : error_handler_
+          : tac_program_(tac)
+          , error_handler_
             ( [&](x3::position_tagged pos, const std::string& msg) { error_handler(pos, msg); }
             )
           {
@@ -150,8 +218,8 @@ namespace tcg
          //! start compilation
          bool start(const ast::statement_list& x) const;
 
+         tac_program& tac_program_;
          error_handler_type error_handler_;
-         tac_program tac_program_;
       };
    } /* namespace code_gen */
 } /* namespace tcg */

@@ -8,10 +8,11 @@
 #include "config.hpp"
 #include "error_handler.hpp"
 #include "compiler.hpp"
+#include "code_generator.hpp"
 
 int main()
 {
-   std::ifstream inp("test.tc");
+   std::ifstream inp("test.tc_inp");
    inp.unsetf(std::ios::skipws);
    std::string source;
    std::copy
@@ -49,11 +50,16 @@ int main()
    if(success && iter == end)
    {
       std::cout << " success!!" << std::endl;
-      tcg::code_gen::compiler c(error_handler);
+      tcg::code_gen::tac_program t;
+      tcg::code_gen::compiler c(t, error_handler);
       if(!c.start(ast))
       {
          std::cout << " Compilation failed " << std::endl;
       }
+      std::cout << t << std::endl;
+      std::ofstream of("test.tc_out", std::ofstream::out | std::ofstream::trunc);
+      tcg::code_gen::code_generator gen(of);
+      gen.generate_code(t);
    }
    else
    {

@@ -40,6 +40,143 @@ namespace tcg
          }
          return true;
       }
+
+      multi_index_type contraction_result_indices(const multi_index_type& m1, const multi_index_type& m2)
+      {
+         multi_index_type result_indices;
+         for(const auto& x : m1)
+         {
+            bool found = false;
+            for(const auto& y : m2)
+            {
+               if(x == y) 
+               {
+                  found = true;
+                  break;
+               }
+            }
+            if(!found) result_indices.emplace_back(x);
+         }
+         for(const auto& x : m2)
+         {
+            bool found = false;
+            for(const auto& y : m1)
+            {
+               if(x == y) 
+               {
+                  found = true;
+                  break;
+               }
+            }
+            if(!found) result_indices.emplace_back(x);
+         }
+         return result_indices;
+      }
+
+      multi_index_type find_overlapping_indices
+         ( const multi_index_type& m1
+         , const multi_index_type& m2
+         )
+      {
+         multi_index_type overlap;
+         for(const auto& x : m1)
+         {
+            for(const auto& y : m2)
+            {
+               if(x == y)
+               {
+                  overlap.emplace_back(x);
+                  break;
+               }
+            }
+         }
+         return overlap;
+      }
+
+      multi_index_type remove_indices
+         ( const multi_index_type& m1
+         , const multi_index_type& m2
+         )
+      {
+         multi_index_type removed_indices;
+         for(const auto& x : m1)
+         {
+            bool found = false;
+            for(const auto& y : m2)
+            {
+               if(x == y)
+               {
+                  found = true;
+                  break;
+               }
+            }
+            if(!found)
+            {
+               removed_indices.emplace_back(x);
+            }
+         }
+         return removed_indices;
+      }
+
+      multi_index_type catenate
+         ( const multi_index_type& m1
+         , const multi_index_type& m2
+         )
+      {
+         multi_index_type catenation;
+         catenation.reserve(m1.size() + m2.size());
+         for(const auto& x : m1)
+         {
+            catenation.emplace_back(x);
+         }
+         for(const auto& x : m2)
+         {
+            catenation.emplace_back(x);
+         }
+         return catenation;
+      }
+
+      permutation_type find_permutation
+         ( const multi_index_type& m1
+         , const multi_index_type& m2
+         )
+      {
+         permutation_type permutation;
+         for(const auto& x : m2)
+         {
+            int position = 0;
+            bool found = false;
+            for(const auto& y : m1)
+            {
+               if(x == y)
+               {
+                  permutation.emplace_back(position);
+                  found = true;
+                  break;
+               }
+               ++position;
+            }
+            if(!found)
+            {
+               BOOST_ASSERT(0);
+            }
+         }
+         return permutation;
+      }
+
+      bool is_unit_permutation(const permutation_type& p)
+      {
+         int position = 0;
+         for(const auto& x : p)
+         {
+            if(x != position)
+            {
+               return false;     
+            }
+            ++position;
+         }
+         return true;
+      }
       
       /***************************************************************************
        * TAC program
@@ -49,10 +186,31 @@ namespace tcg
          switch(op)
          {
             case ast::op_plus:
+            case ast::op_minus:
             {
                auto v1 = variable_stack_.top(); variable_stack_.pop();
                auto v2 = variable_stack_.top(); variable_stack_.pop();
-               tac t(tensor_intermed::create_guid(), v1, v2, op);
+               if(!is_permutation(v1.indices_, v2.indices_)) BOOST_ASSERT(0);
+               this->emplace_back(op, v2, v1, tac_variable(tensor_intermed::create_guid(), v2.indices_));
+               this->add_variable(this->back().result_);
+               break;
+            }
+            case ast::op_mult:
+            case ast::op_div:
+            {
+               auto v1 = variable_stack_.top(); variable_stack_.pop();
+               auto v2 = variable_stack_.top(); variable_stack_.pop();
+               auto result_indices = contraction_result_indices(v2.indices_, v1.indices_);
+               this->emplace_back(op, v2, v1, tac_variable(tensor_intermed::create_guid(), result_indices));
+               this->add_variable(this->back().result_);
+               break;
+            }
+            case ast::op_equal:
+            {
+               auto v1 = variable_stack_.top(); variable_stack_.pop();
+               auto v2 = variable_stack_.top(); variable_stack_.pop();
+               if(!is_permutation(v1.indices_, v2.indices_)) BOOST_ASSERT(0);
+               this->emplace_back(op, v2, tac_variable(), v1);
                break;
             }
             default: 
@@ -81,6 +239,7 @@ namespace tcg
       bool compiler::operator()(const unsigned& x) const
       {
          std::cout << " unsigned " << x << std::endl;
+         BOOST_ASSERT(0);
          return true;
       }
       
@@ -90,6 +249,7 @@ namespace tcg
       bool compiler::operator()(const bool& x) const
       {
          std::cout << " bool " << x << std::endl;
+         BOOST_ASSERT(0);
          return true;
       }
       
@@ -99,6 +259,7 @@ namespace tcg
       bool compiler::operator()(const ast::variable& x) const
       {
          std::cout << " variable " << x.name_ << std::endl;
+         BOOST_ASSERT(0);
          return true;
       }
       
@@ -108,11 +269,13 @@ namespace tcg
       bool compiler::operator()(const ast::tensor_litteral& x) const
       {
          std::cout << " tensor " << x.name_ << "  ";
-         for(int i = 0; i < x.indices_.size(); ++i)
+         for(size_t i = 0; i < x.indices_.size(); ++i)
          {
             std::cout << " " << x.indices_[i];
          }
          std::cout << std::endl;
+         tac_variable t(x.name_, x.indices_, 'p');
+         tac_program_.add_variable(t);
          return true;
       }
 
@@ -128,8 +291,13 @@ namespace tcg
          }
          switch(x.operator_)
          {
-            case ast::op_plus: std::cout << " + " << std::endl; break;
-            case ast::op_mult: std::cout << " * " << std::endl; break;
+            case ast::op_plus: 
+            case ast::op_minus: 
+            case ast::op_mult: 
+            case ast::op_div:
+            case ast::op_equal:
+               tac_program_.op(x.operator_);
+               break;
             default: BOOST_ASSERT(0); return false;
          }
          return true;
@@ -140,6 +308,8 @@ namespace tcg
        */
       bool compiler::operator()(const ast::unary& x) const
       {
+         std::cout << " unary " << std::endl;
+         BOOST_ASSERT(0);
          if (!boost::apply_visitor(*this, x.operand_))
             return false;
          switch (x.operator_)
@@ -222,6 +392,7 @@ namespace tcg
          {
             return false;
          }
+         tac_program_.op(ast::op_equal);
          return true;
       }
       
