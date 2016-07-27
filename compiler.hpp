@@ -32,7 +32,7 @@ namespace tcg
          return os;
       }
       /***************************************************************************
-       * 
+       * TAC stuff
        ***************************************************************************/
       struct tac_variable
       {
@@ -143,6 +143,41 @@ namespace tcg
       multi_index_type create_permuted_indices(const multi_index_type&, const permutation_type&);
 
       /***************************************************************************
+       * Symbol table
+       ***************************************************************************/
+      struct symbol
+      {  
+         std::string name_;
+         char pflag_;
+      };
+
+      struct symbol_table
+      {
+         symbol_table(symbol_table* prev = nullptr)
+            : enclosing_table_(prev)
+         {
+         }
+
+         void put(const std::string& s, const symbol& sym)
+         {
+            symbols_.emplace(s, sym);
+         }
+
+         symbol* get(const std::string& s)
+         {
+            for(symbol_table* t = this; t != nullptr; t = t->enclosing_table_)
+            {
+               auto isym = t->symbols_.find(s);
+               if(isym != t->symbols_.end()) return &((*isym).second);
+            }
+            return nullptr;
+         }
+
+         std::map<std::string, symbol> symbols_;
+         symbol_table* enclosing_table_ = nullptr;
+      };
+
+      /***************************************************************************
        * Compiler
        ***************************************************************************/
       struct compiler
@@ -222,6 +257,7 @@ namespace tcg
 
          tac_program& tac_program_;
          error_handler_type error_handler_;
+         symbol_table symbol_table_;
       };
    } /* namespace code_gen */
 } /* namespace tcg */

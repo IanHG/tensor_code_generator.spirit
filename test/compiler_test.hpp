@@ -124,6 +124,45 @@ namespace tcg
                              , "create_permuted_indices_test error.");
          }
       };
+
+      /*!
+       *
+       */
+      struct symbol_table_test : public virtual unit_test
+      {
+         void do_test()
+         {
+            code_gen::symbol_table sym_tab;
+            code_gen::symbol sym;
+            sym.name_ = "test";
+            sym_tab.put(sym.name_, sym);
+
+            UNIT_ASSERT( sym_tab.get("test"), "symbol_table_test error.");
+            UNIT_ASSERT(!sym_tab.get("lawl"), "symbol_table_test error.");
+         }
+      };
+
+      /*!
+       *
+       */
+      struct nested_symbol_table_test : public virtual unit_test
+      {
+         void do_test()
+         {
+            code_gen::symbol_table sym_tab;
+            code_gen::symbol_table nested_sym_tab(&sym_tab);
+            code_gen::symbol sym1; sym1.name_ = "sym1";
+            code_gen::symbol sym2; sym2.name_ = "sym2";
+            sym_tab.put(sym1.name_, sym1);
+            nested_sym_tab.put(sym2.name_, sym2);
+            
+            UNIT_ASSERT( sym_tab.get("sym1"), "nested_symbol_table_test error.");
+            UNIT_ASSERT(!sym_tab.get("sym2"), "nested_symbol_table_test error.");
+            UNIT_ASSERT( nested_sym_tab.get("sym1"), "nested_symbol_table_test error.");
+            UNIT_ASSERT( nested_sym_tab.get("sym2"), "nested_symbol_table_test error.");
+            UNIT_ASSERT(!nested_sym_tab.get("sym3"), "nested_symbol_table_test error.");
+         }
+      };
    } /* namespace test */
 } /* namespace tcg */
 

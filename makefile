@@ -1,43 +1,25 @@
-OBJ=main.cpp
-FUNC=expression.cpp statement.cpp compiler.cpp code_generator.cpp
+OBJS=main.o expression.o statement.o compiler.o code_generator.o
 CXX=g++
+CXXSTD=--std=c++14
 CXXFLAGS=-Wall
 CXXOPTIMFLAGS=-O3
 CXXDEBUGFLAGS=-g -O0
 LIBS=-pthread -lboost_system -lblas -llapack
 
-gcc: $(OBJ) $(FUNC)
-	$(CXX) $(CXXFLAGS) $(CXXOPTIMFLAGS) -fexpensive-optimizations -Drestrict= -std=c++14 -o main $(OBJ) $(FUNC) $(LIBS)
-	./main
+# link
+tcg.x: $(OBJS)
+	$(CXX) $(CXXOPTIMFLAGS) $(OBJS) -o tcg.x $(LIBS)
 
-gcc_debug: $(OBJ) $(FUNC)
-	$(CXX) $(CXXFLAGS) $(CXXDEBUGFLAGS) -std=c++14 -o main $(OBJ) $(FUNC) $(LIBS)
-	valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all ./main
+# pull dependencies for existing .o files
+-include $(OBJS:.o=.d)
 
-gcc_assembly: $(OBJ) $(FUNC)
-	$(CXX) $(CXXFLAGS) $(CXXDEBUGFLAGS) -O3 -S -std=c++14 $(OBJ) $(FUNC) $(LIBS)
-
-intel: $(OBJ) $(FUNC)
-	icc $(CXXFLAGS) $(CXXOPTIMFLAGS) -ip -ipo -fast -std=c++14 -Wcontext-limit=100 -o main $(OBJ) $(FUNC) $(LIBS)
-	./main
-
-intel_debug: $(OBJ) $(FUNC)
-	icc $(CXXFLAGS) $(CXXDEBUGFLAGS) -std=c++14 -Wcontext-limit=100 -o main $(OBJ) $(FUNC) $(LIBS)
-	valgrind --tool=memcheck --leak-check=yes ./main
-
-clang: $(OBJ) $(FUNC)
-	clang++ $(CXXFLAGS) $(CXXOPTIMFLAGS) -std=c++14 -o main $(OBJ) $(FUNC) $(LIBS)
-	./main
-
-clang_debug: $(OBJ) $(FUNC)
-	clang++ $(CXXFLAGS) $(CXXDEBUGFLAGS) -std=c++14 -o main $(OBJ) $(FUNC) $(LIBS)
-	valgrind --tool=memcheck --leak-check=yes ./main
-
-clang_assembly: $(OBJ) $(FUNC)
-	clang++ $(CXXFLAGS) $(CXXDEBUGFLAGS) -O3 -S -std=c++14 $(OBJ) $(FUNC) $(LIBS)
+# compile and generate dependency info
+%.o: %.cpp
+	$(CXX) $(CXXSTD) -c $(CXXOPTIMFLAGS) $*.cpp -o $*.o
+	$(CXX) $(CXXSTD) -MM $(CXXOPTIMFLAGS) $*.cpp > $*.d
 
 clean:
-	rm -f *core main
+	rm -f *core *.o *.d tcg.x
 
 lib: libtcg.a
 
