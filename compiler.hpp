@@ -140,6 +140,8 @@ namespace tcg
 
       bool is_unit_permutation(const permutation_type&);
 
+      multi_index_type create_permuted_indices(const multi_index_type&, const permutation_type&);
+
       /***************************************************************************
        * Compiler
        ***************************************************************************/

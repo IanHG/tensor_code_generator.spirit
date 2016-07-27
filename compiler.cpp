@@ -178,6 +178,16 @@ namespace tcg
          return true;
       }
       
+      multi_index_type create_permuted_indices(const multi_index_type& m, const permutation_type& p)
+      {
+         assert(m.size() == p.size());
+         multi_index_type permuted_indices;
+         for(const auto& i : p)
+         {
+            permuted_indices.emplace_back(m[i]);
+         }
+         return permuted_indices;
+      }
       /***************************************************************************
        * TAC program
        ***************************************************************************/

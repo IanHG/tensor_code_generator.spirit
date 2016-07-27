@@ -124,7 +124,26 @@ namespace tcg
             write_allocation(t.result_);
          }
          write_assignment_loop(ast::op_equal, t.arg1_, t.result_);
-         write_axpy(t.op_, t.arg2_, t.result_);
+         
+         auto arg2_permutation = find_permutation(t.result_.indices_, t.arg2_.indices_);
+         auto arg2 = t.arg2_;
+         if(!is_unit_permutation(arg2_permutation))
+         {
+            auto saved_size_var = size_var_;
+            multi_index_type permutation_indices = create_permuted_indices(arg2.indices_, arg2_permutation);
+            tac_variable permuted_arg2("permuted" + arg2.name_, permutation_indices, 't');
+            size_var_ = "size" + tensor_intermed::create_guid();
+            of_ << "int " << size_var_ << " = " << multi_index_multiplication(arg2.indices_) << ";" << new_line(); 
+            
+            allocation_table_.push_back(permuted_arg2);
+            write_allocation(permuted_arg2);
+            write_permutation(arg2, permuted_arg2);
+            
+            arg2 = permuted_arg2;
+            size_var_ = saved_size_var;
+         }
+
+         write_axpy(t.op_, arg2, t.result_);
          size_var_ = "";
       }
 
@@ -153,7 +172,7 @@ namespace tcg
              << "   dgemm(&tcg_gemm_transa, &tcg_gemm_transb"
              << ", &tcg_gemm_m, &tcg_gemm_n, &tcg_gemm_k, &tcg_gemm_alpha, " 
              << arg1.name_ << ", &lda, " << arg2.name_ 
-             << ", &ldb, &tgc_gemm_beta, " << result.name_ << ", &ldc);" << new_line()
+             << ", &ldb, &tcg_gemm_beta, " << result.name_ << ", &ldc);" << new_line()
              << "}" << new_line();
       }
 
@@ -178,10 +197,38 @@ namespace tcg
 
          auto arg1_permutation = find_permutation(arg1_indices, t.arg1_.indices_);
          auto arg2_permutation = find_permutation(arg2_indices, t.arg2_.indices_);
-
-         if(!is_unit_permutation(arg1_permutation) || !is_unit_permutation(arg2_permutation))
+         
+         auto arg1 = t.arg1_;
+         auto arg2 = t.arg2_;
+         if(!is_unit_permutation(arg1_permutation)) 
          {
-            BOOST_ASSERT(0);
+            auto saved_size_var = size_var_;
+            multi_index_type permutation_indices = create_permuted_indices(arg1.indices_, arg1_permutation);
+            tac_variable permuted_arg1("permuted" + arg1.name_, permutation_indices, 't');
+            size_var_ = "size" + tensor_intermed::create_guid();
+            of_ << "int " << size_var_ << " = " << multi_index_multiplication(arg1.indices_) << ";" << new_line(); 
+            
+            allocation_table_.push_back(permuted_arg1);
+            write_allocation(permuted_arg1);
+            write_permutation(arg1, permuted_arg1);
+            
+            arg1 = permuted_arg1;
+            size_var_ = saved_size_var;
+         }
+         if(!is_unit_permutation(arg2_permutation))
+         {
+            auto saved_size_var = size_var_;
+            multi_index_type permutation_indices = create_permuted_indices(arg2.indices_, arg2_permutation);
+            tac_variable permuted_arg2("permuted" + arg2.name_, permutation_indices, 't');
+            size_var_ = "size" + tensor_intermed::create_guid();
+            of_ << "int " << size_var_ << " = " << multi_index_multiplication(arg2.indices_) << ";" << new_line(); 
+            
+            allocation_table_.push_back(permuted_arg2);
+            write_allocation(permuted_arg2);
+            write_permutation(arg2, permuted_arg2);
+            
+            arg2 = permuted_arg2;
+            size_var_ = saved_size_var;
          }
          
          auto extent1 = multi_index_multiplication(arg1_remaining_indices);
@@ -191,7 +238,103 @@ namespace tcg
                                                                   , extent2
                                                                   , extent3
                                                                   };
-         write_gemm(t.arg1_, t.arg2_, t.result_, extents);
+         write_gemm(arg1, arg2, t.result_, extents);
+      }
+
+      /*!
+       *
+       */
+      void code_generator::write_permutation
+         ( const tac_variable& arg
+         , const tac_variable& permuted_arg
+         //, const permutation_type& permutation
+         ) const
+      {
+         of_ << "/**************************************** " << new_line()
+             << " * PERMUTATION CODE " << new_line()
+             << " ****************************************/" << new_line();
+         of_ << "{" << new_line();
+         // start for loops
+         for(char idx : arg.indices_)
+         {
+            of_ << "for(int i" << idx << " = 0" << "; i" << idx << " < " << idx << "; ++i" << idx << ")" << new_line()
+                << "{" << new_line();
+         }
+
+         // arg idx
+         of_ << "int arg_idx = ";
+         if(arg.indices_.size() > 0)
+         {
+            of_ << "i" << arg.indices_[0];
+            for(size_t i = 1; i < arg.indices_.size(); ++i)
+            {
+               of_ << " + i" << arg.indices_[i];
+               if(i > 0)
+               {
+                  for(int j = i - 1; j >= 0; --j)
+                  {
+                     of_ << "*" << arg.indices_[j];
+                  }
+               }
+            }
+         }
+         else
+         {
+            of_ << "0";
+         }
+         of_ << ";" << new_line();
+
+         // permuted idx
+         of_ << "int permuted_idx = ";
+         if(permuted_arg.indices_.size() > 0)
+         {
+            of_ << "i" << permuted_arg.indices_[0];
+            for(size_t i = 1; i < permuted_arg.indices_.size(); ++i)
+            {
+               of_ << " + i" << permuted_arg.indices_[i];
+               if(i > 0)
+               {
+                  for(int j = i - 1; j >= 0; --j)
+                  {
+                     of_ << "*" << permuted_arg.indices_[j];
+                  }
+               }
+            }
+         }
+         else
+         {
+            of_ << "0";
+         }
+         of_ << ";" << new_line();
+
+         of_ << permuted_arg.name_ << "[permuted_idx] = " << arg.name_ << "[arg_idx];" << new_line();
+
+         // end for loops
+         for(size_t i = 0; i < arg.indices_.size(); ++i)
+         {
+            of_ << "}" << new_line();
+         }
+         of_ << "}" << new_line();
+      }
+
+
+      /*!
+       *
+       */
+      void code_generator::write_permuted_assignment
+         ( ast::optoken op
+         , const tac_variable& arg1
+         , const tac_variable& result
+         , const permutation_type& permutation
+         ) const
+      {
+         multi_index_type permutation_indices = create_permuted_indices(arg1.indices_, permutation);
+         tac_variable permuted_arg1("permuted" + arg1.name_, permutation_indices, 't');
+         
+         allocation_table_.push_back(permuted_arg1);
+         write_allocation(permuted_arg1);
+         write_permutation(arg1, permuted_arg1);
+         write_assignment_loop(op, permuted_arg1, result);
       }
 
       /*!
@@ -200,10 +343,21 @@ namespace tcg
       void code_generator::write_assignment(const tac& t) const
       {
          size_var_ = "size" + tensor_intermed::create_guid();
-         of_ << "{" << new_line()
-             << "int " << size_var_ << " = " << multi_index_multiplication(t.arg1_.indices_) << ";" << new_line(); 
-         write_assignment_loop(t.op_, t.arg1_, t.result_);
-         of_ << "}" << new_line();
+         //of_ << "{" << new_line()
+         of_ << "int " << size_var_ << " = " << multi_index_multiplication(t.arg1_.indices_) << ";" << new_line(); 
+
+         auto permutation = find_permutation(t.result_.indices_, t.arg1_.indices_);
+         
+         if(is_unit_permutation(permutation))
+         {
+            write_assignment_loop(t.op_, t.arg1_, t.result_);
+         }
+         else
+         {
+            write_permuted_assignment(t.op_, t.arg1_, t.result_, permutation);
+         }
+         
+         //of_ << "}" << new_line();
          size_var_ = "";
       }
 

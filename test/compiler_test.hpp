@@ -105,6 +105,25 @@ namespace tcg
             UNIT_ASSERT(!code_gen::is_unit_permutation(vec2), "unit_permutation_test error.");
          }
       };
+
+      /*!
+       *
+       */
+      struct create_permuted_indices_test : public virtual unit_test
+      {
+         void do_test()
+         {
+            code_gen::multi_index_type vec1{'i','j','k'};
+            code_gen::permutation_type vec2{2,0,1};
+            code_gen::permutation_type vec3{0,1,2};
+            UNIT_ASSERT_EQUAL( code_gen::create_permuted_indices(vec1, vec2)
+                             ,(code_gen::multi_index_type{'k','i','j'})
+                             , "create_permuted_indices_test error.");
+            UNIT_ASSERT_EQUAL( code_gen::create_permuted_indices(vec1, vec3)
+                             ,(code_gen::multi_index_type{'i','j','k'})
+                             , "create_permuted_indices_test error.");
+         }
+      };
    } /* namespace test */
 } /* namespace tcg */
 

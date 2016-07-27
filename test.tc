@@ -1,4 +1,0 @@
-/*
- * this is also a comment
- */
-A[ij] = (B[ik] + C[ki] + E[ik]) * D[kj]; // this is a comment
