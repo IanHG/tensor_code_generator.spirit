@@ -11,6 +11,7 @@ namespace tcg
       namespace x3 = boost::spirit::x3;
       struct expression_class;
       using expression_type = x3::rule<expression_class, ast::expression>;
+      using expression_id = expression_type::id;
 
       BOOST_SPIRIT_DECLARE(expression_type);
    } /* namespace parser */

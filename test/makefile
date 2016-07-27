@@ -37,8 +37,3 @@ clang_assembly: $(OBJ) $(FUNC)
 
 clean:
 	rm -f *core main
-
-lib: include/axpy.cpp
-	cd lib; \
-	$(CXX) $(CXXOPTIMFLAGS) -std=c++14 -c ../include/axpy.cpp; \
-	ar -cvq libtcg.a *.o;

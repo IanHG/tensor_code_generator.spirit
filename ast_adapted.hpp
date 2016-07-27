@@ -5,43 +5,48 @@
 #include <boost/fusion/include/adapt_struct.hpp>
 
 BOOST_FUSION_ADAPT_STRUCT
- ( tcg::ast::tensor_litteral
- , name_, indices_
- )
+   ( tcg::ast::tensor_litteral
+   , name_, indices_
+   )
 
 BOOST_FUSION_ADAPT_STRUCT
- ( tcg::ast::unary
- , operator_, operand_
- )
+   ( tcg::ast::unary
+   , operator_, operand_
+   )
 
 BOOST_FUSION_ADAPT_STRUCT
- ( tcg::ast::operation
- , operator_, operand_
- )
+   ( tcg::ast::operation
+   , operator_, operand_
+   )
 
 BOOST_FUSION_ADAPT_STRUCT
- ( tcg::ast::expression
- , first_, rest_
- )
+   ( tcg::ast::expression
+   , first_, rest_
+   )
 
 BOOST_FUSION_ADAPT_STRUCT
- ( tcg::ast::variable_declaration
- , assign_
- )
+   ( tcg::ast::variable_declaration
+   , assign_
+   )
 
 BOOST_FUSION_ADAPT_STRUCT
- ( tcg::ast::assignment
- , lhs_, rhs_
- )
+   ( tcg::ast::assignment
+   , lhs_, rhs_
+   )
 
 BOOST_FUSION_ADAPT_STRUCT
- ( tcg::ast::if_statement
- , condition_, then_, else_
- )
+   ( tcg::ast::if_statement
+   , condition_, then_, else_
+   )
 
 BOOST_FUSION_ADAPT_STRUCT
- ( tcg::ast::while_statement
- , condition_, body_
- )
+   ( tcg::ast::while_statement
+   , condition_, body_
+   )
+
+BOOST_FUSION_ADAPT_STRUCT
+   ( tcg::ast::function_definition
+   , name_, body_
+   )
 
 #endif /* TCG_AST_ADAPTED_H_INCLUDED */

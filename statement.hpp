@@ -10,8 +10,8 @@ namespace tcg
    namespace parser
    {
       struct statement_class;
-      typedef x3::rule<statement_class, ast::statement_list> statement_type;
-      typedef statement_type::id statement_id;
+      using statement_type = x3::rule<statement_class, ast::statement_list>;
+      using statement_id = statement_type::id;
       BOOST_SPIRIT_DECLARE(statement_type);
    } /* namespace parser */
    

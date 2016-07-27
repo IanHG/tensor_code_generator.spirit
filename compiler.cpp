@@ -425,6 +425,16 @@ namespace tcg
          BOOST_ASSERT(0);
          return true;
       }
+      
+      /*!
+       *
+       */
+      bool compiler::operator()(const ast::function_definition& x) const
+      {
+         std::cout << " function definition not implemented yet in compiler " << std::endl;
+         BOOST_ASSERT(0);
+         return true;
+      }
 
       /*!
        * Start compilation of AST.

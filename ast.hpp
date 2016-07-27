@@ -105,6 +105,7 @@ namespace tcg
       struct if_statement;
       struct while_statement;
       struct statement_list;
+      struct function_definition;
 
       struct statement
        : x3::variant
@@ -113,6 +114,7 @@ namespace tcg
          , x3::forward_ast<if_statement>
          , x3::forward_ast<while_statement>
          , x3::forward_ast<statement_list>
+         , x3::forward_ast<function_definition>
          //, boost::recursive_wrapper<if_statement>
          //, boost::recursive_wrapper<while_statement>
          //, boost::recursive_wrapper<statement_list>
@@ -137,6 +139,12 @@ namespace tcg
       struct while_statement
       {
          expression condition_;
+         statement body_;
+      };
+
+      struct function_definition
+      {
+         std::string name_;
          statement body_;
       };
 

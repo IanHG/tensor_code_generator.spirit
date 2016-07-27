@@ -251,6 +251,7 @@ namespace tcg
          bool operator()(const ast::assignment& x) const;
          bool operator()(const ast::if_statement& x) const;
          bool operator()(const ast::while_statement& x) const;
+         bool operator()(const ast::function_definition& x) const;
 
          //! start compilation
          bool start(const ast::statement_list& x) const;
