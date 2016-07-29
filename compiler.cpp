@@ -191,7 +191,34 @@ namespace tcg
       /***************************************************************************
        * TAC program
        ***************************************************************************/
-      void tac_program::op(ast::optoken op)
+      void intermediate_program::add_variable(const tac_variable& v) 
+      { 
+         variable_stack_.push(v);
+         if(!symbol_table_.get(v.name_))
+         {
+            symbol sym;
+            sym.name_ = v.name_;
+            sym.utype_ = v.utype_;
+            sym.ptype_ = v.ptype_;
+            sym.pflag_ = v.pflag_;
+            symbol_table_.put(sym.name_, sym); 
+         }
+         for(size_t i = 0; i < v.indices_.size(); ++i)
+         {
+            std::string idx = std::string(1, v.indices_[i]);
+            if(!symbol_table_.get(idx))
+            {
+               symbol sym;
+               sym.name_ = idx;
+               sym.utype_ = 'i';
+               sym.ptype_ = 'v';
+               sym.pflag_ = 'p';
+               symbol_table_.put(sym.name_, sym); 
+            }
+         }
+      }
+
+      void intermediate_program::op(ast::optoken op)
       {
          switch(op)
          {
@@ -201,8 +228,9 @@ namespace tcg
                auto v1 = variable_stack_.top(); variable_stack_.pop();
                auto v2 = variable_stack_.top(); variable_stack_.pop();
                if(!is_permutation(v1.indices_, v2.indices_)) BOOST_ASSERT(0);
-               this->emplace_back(op, v2, v1, tac_variable(tensor_intermed::create_guid(), v2.indices_));
-               this->add_variable(this->back().result_);
+               auto result = tac_variable(tensor_intermed::create_guid(), v2.indices_);
+               this->emplace_back(tac(op, v2, v1, result));
+               this->add_variable(result);
                break;
             }
             case ast::op_mult:
@@ -211,8 +239,9 @@ namespace tcg
                auto v1 = variable_stack_.top(); variable_stack_.pop();
                auto v2 = variable_stack_.top(); variable_stack_.pop();
                auto result_indices = contraction_result_indices(v2.indices_, v1.indices_);
-               this->emplace_back(op, v2, v1, tac_variable(tensor_intermed::create_guid(), result_indices));
-               this->add_variable(this->back().result_);
+               auto result = tac_variable(tensor_intermed::create_guid(), result_indices);
+               this->emplace_back(tac(op, v2, v1, result));
+               this->add_variable(result);
                break;
             }
             case ast::op_equal:
@@ -220,7 +249,7 @@ namespace tcg
                auto v1 = variable_stack_.top(); variable_stack_.pop();
                auto v2 = variable_stack_.top(); variable_stack_.pop();
                if(!is_permutation(v1.indices_, v2.indices_)) BOOST_ASSERT(0);
-               this->emplace_back(op, v2, tac_variable(), v1);
+               this->emplace_back(tac(op, v2, tac_variable(), v1));
                break;
             }
             default: 
@@ -237,7 +266,7 @@ namespace tcg
       /*!
        *
        */
-      bool compiler::operator()(const double& x) const
+      bool compiler::operator()(const double& x, intermediate_program& prog) const
       {
          std::cout << " double " << x << std::endl;
          return true;
@@ -246,7 +275,7 @@ namespace tcg
       /*!
        *
        */
-      bool compiler::operator()(const unsigned& x) const
+      bool compiler::operator()(const unsigned& x, intermediate_program& prog) const
       {
          std::cout << " unsigned " << x << std::endl;
          BOOST_ASSERT(0);
@@ -256,7 +285,7 @@ namespace tcg
       /*!
        *
        */
-      bool compiler::operator()(const bool& x) const
+      bool compiler::operator()(const bool& x, intermediate_program& prog) const
       {
          std::cout << " bool " << x << std::endl;
          BOOST_ASSERT(0);
@@ -266,7 +295,7 @@ namespace tcg
       /*!
        *
        */
-      bool compiler::operator()(const ast::variable& x) const
+      bool compiler::operator()(const ast::variable& x, intermediate_program& prog) const
       {
          std::cout << " variable " << x.name_ << std::endl;
          BOOST_ASSERT(0);
@@ -276,7 +305,7 @@ namespace tcg
       /*!
        *
        */
-      bool compiler::operator()(const ast::tensor_litteral& x) const
+      bool compiler::operator()(const ast::tensor_litteral& x, intermediate_program& prog) const
       {
          std::cout << " tensor " << x.name_ << "  ";
          for(size_t i = 0; i < x.indices_.size(); ++i)
@@ -285,17 +314,18 @@ namespace tcg
          }
          std::cout << std::endl;
          tac_variable t(x.name_, x.indices_, 'p');
-         tac_program_.add_variable(t);
+         prog.add_variable(t);
          return true;
       }
 
       /*!
        *
        */
-      bool compiler::operator()(const ast::operation& x) const
+      bool compiler::operator()(const ast::operation& x, intermediate_program& prog) const
       {
          std::cout << " operation " << std::endl;
-         if(!boost::apply_visitor(*this, x.operand_))
+         //if(!boost::apply_visitor(*this, x.operand_))
+         if(!boost::apply_visitor([&](auto& x){ return (*this)(x, prog); }, x.operand_))
          {
             return false;
          }
@@ -306,7 +336,7 @@ namespace tcg
             case ast::op_mult: 
             case ast::op_div:
             case ast::op_equal:
-               tac_program_.op(x.operator_);
+               prog.op(x.operator_);
                break;
             default: BOOST_ASSERT(0); return false;
          }
@@ -316,11 +346,12 @@ namespace tcg
       /*!
        *
        */
-      bool compiler::operator()(const ast::unary& x) const
+      bool compiler::operator()(const ast::unary& x, intermediate_program& prog) const
       {
          std::cout << " unary " << std::endl;
          BOOST_ASSERT(0);
-         if (!boost::apply_visitor(*this, x.operand_))
+         //if(!boost::apply_visitor(*this, x.operand_))
+         if(!boost::apply_visitor([&](auto& x){ return (*this)(x, prog); }, x.operand_))
             return false;
          switch (x.operator_)
          {
@@ -335,15 +366,16 @@ namespace tcg
       /*!
        *
        */
-      bool compiler::operator()(const ast::expression& x) const
+      bool compiler::operator()(const ast::expression& x, intermediate_program& prog) const
       {
-         if(!boost::apply_visitor(*this, x.first_))
+         //if(!boost::apply_visitor(*this, x.first_))
+         if(!boost::apply_visitor([&](auto& x){ return (*this)(x, prog); }, x.first_))
          {
             return false;
          }
          for(const auto& oper : x.rest_)
          {
-            if(!(*this)(oper))
+            if(!(*this)(oper, prog))
             {
                return false;
             }
@@ -358,19 +390,20 @@ namespace tcg
       /*!
        *
        */
-      bool compiler::operator()(const ast::statement& x) const
+      bool compiler::operator()(const ast::statement& x, intermediate_program& prog) const
       {
-         return boost::apply_visitor(*this, x);
+         //return boost::apply_visitor(*this, x);
+         return boost::apply_visitor([&](auto& x){ return (*this)(x, prog); }, x);
       }
 
       /*!
        *
        */
-      bool compiler::operator()(const ast::statement_list& x) const
+      bool compiler::operator()(const ast::statement_list& x, intermediate_program& prog) const
       {
          for(const auto& s : x)
          {
-            if(!(*this)(s))
+            if(!(*this)(s, prog))
             {
                return false;
             }
@@ -381,7 +414,7 @@ namespace tcg
       /*!
        *
        */
-      bool compiler::operator()(const ast::variable_declaration& x) const
+      bool compiler::operator()(const ast::variable_declaration& x, intermediate_program& prog) const
       {
          std::cout << " variable declaration not implemented yet in compiler " << std::endl;
          BOOST_ASSERT(0);
@@ -391,25 +424,26 @@ namespace tcg
       /*!
        *
        */
-      bool compiler::operator()(const ast::assignment& x) const
+      bool compiler::operator()(const ast::assignment& x, intermediate_program& prog) const
       {
          std::cout << " assignment statement " << std::endl;
-         if(!(*this)(x.rhs_))
+         if(!(*this)(x.rhs_, prog))
          {
             return false;
          }
-         if(!boost::apply_visitor(*this, x.lhs_))
+         //if(!boost::apply_visitor(*this, x.lhs_)
+         if(!boost::apply_visitor([&](auto& x){ return (*this)(x, prog); }, x.lhs_))
          {
             return false;
          }
-         tac_program_.op(ast::op_equal);
+         prog.op(ast::op_equal);
          return true;
       }
       
       /*!
        *
        */
-      bool compiler::operator()(const ast::if_statement& x) const
+      bool compiler::operator()(const ast::if_statement& x, intermediate_program& prog) const
       {
          std::cout << " if statement not implemented yet in compiler " << std::endl;
          BOOST_ASSERT(0);
@@ -419,7 +453,7 @@ namespace tcg
       /*!
        *
        */
-      bool compiler::operator()(const ast::while_statement& x) const
+      bool compiler::operator()(const ast::while_statement& x, intermediate_program& prog) const
       {
          std::cout << " while statement not implemented yet in compiler " << std::endl;
          BOOST_ASSERT(0);
@@ -429,10 +463,16 @@ namespace tcg
       /*!
        *
        */
-      bool compiler::operator()(const ast::function_definition& x) const
+      bool compiler::operator()(const ast::function_definition& x, intermediate_program& prog) const
       {
-         std::cout << " function definition not implemented yet in compiler " << std::endl;
-         BOOST_ASSERT(0);
+         //std::cout << " function definition not implemented yet in compiler " << std::endl;
+         //BOOST_ASSERT(0);
+         tac_function f(x.name_, &prog.symbol_table_);
+         if(!(*this)(x.body_, f.program_))
+         {
+            return false;
+         }
+         prog.emplace_back(f);
          return true;
       }
 
@@ -441,7 +481,7 @@ namespace tcg
        */
       bool compiler::start(const ast::statement_list& x) const
       {
-         if(!(*this)(x))
+         if(!(*this)(x, intermediate_program_))
          { 
             return false; // compilation failed return false
          }

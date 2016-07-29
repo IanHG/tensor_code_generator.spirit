@@ -50,15 +50,16 @@ int main()
    if(success && iter == end)
    {
       std::cout << " success!!" << std::endl;
-      tcg::code_gen::tac_program t;
+      tcg::code_gen::intermediate_program t;
       tcg::code_gen::compiler c(t, error_handler);
       if(!c.start(ast))
       {
          std::cout << " Compilation failed " << std::endl;
       }
       std::cout << t << std::endl;
-      std::ofstream of("test.tc_out", std::ofstream::out | std::ofstream::trunc);
-      tcg::code_gen::code_generator gen(of);
+      std::ofstream ofhpp("test.hpp", std::ofstream::out | std::ofstream::trunc);
+      std::ofstream ofcpp("test.cpp", std::ofstream::out | std::ofstream::trunc);
+      tcg::code_gen::code_generator gen(ofhpp, ofcpp, "test");
       gen.generate_code(t);
    }
    else

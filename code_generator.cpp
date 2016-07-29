@@ -53,7 +53,7 @@ namespace tcg
          std::string type = type_as_string(t);
          std::string name = t.name_;
          std::string size = size_var_ != "" ? size_var_ : multi_index_multiplication(t.indices_);
-         of_ << type << "* " << name << " = new " << type 
+         ofcpp_ << type << "* " << name << " = new " << type 
              << "[" << size << "];" << new_line();
       }
 
@@ -62,7 +62,7 @@ namespace tcg
        */
       void code_generator::write_deallocation(const tac_variable& t) const
       {
-         of_ << "delete[] " << t.name_ << ";" << new_line();
+         ofcpp_ << "delete[] " << t.name_ << ";" << new_line();
       }
 
       /*!
@@ -75,7 +75,7 @@ namespace tcg
          ) const
       {
          if(size_var_ == "") BOOST_ASSERT(0);
-         of_ << "for(int isize = 0; isize < " << size_var_ << "; ++isize) \n"
+         ofcpp_ << "for(int isize = 0; isize < " << size_var_ << "; ++isize) \n"
              << "{\n"
              << "   " << result.name_ << "[isize] " << op_as_string(op) << " " << arg1.name_ << "[isize];" << new_line()
              << "}\n";
@@ -91,20 +91,20 @@ namespace tcg
          ) const
       {
          auto type = type_as_string(arg1);
-         of_ << "{" << new_line()
+         ofcpp_ << "{" << new_line()
              << type << " alpha = ";
          switch(op)
          {
             case ast::op_plus:
-               of_ << "1.0";
+               ofcpp_ << "1.0";
                break;
             case ast::op_minus:
-               of_ << "-1.0";
+               ofcpp_ << "-1.0";
                break;
             default:
                BOOST_ASSERT(0);
          }
-         of_ << ";" << new_line()
+         ofcpp_ << ";" << new_line()
              << "int incx = 1;" << new_line()
              << "int incy = 1;" << new_line()
              << "daxpy(&" << size_var_ << ", &alpha, " << arg1.name_ << ", &incx, " << arg2.name_ << ", &incy);" << new_line()
@@ -117,7 +117,7 @@ namespace tcg
       void code_generator::write_sum(const tac& t) const
       {
          size_var_ = "size" + tensor_intermed::create_guid();
-         of_ << "int " << size_var_ << " = " << multi_index_multiplication(t.arg1_.indices_) << ";" << new_line(); 
+         ofcpp_ << "int " << size_var_ << " = " << multi_index_multiplication(t.arg1_.indices_) << ";" << new_line(); 
          if(is_temporary(t.result_))
          {
             allocation_table_.push_back(t.result_);
@@ -133,7 +133,7 @@ namespace tcg
             multi_index_type permutation_indices = create_permuted_indices(arg2.indices_, arg2_permutation);
             tac_variable permuted_arg2("permuted" + arg2.name_, permutation_indices, 't');
             size_var_ = "size" + tensor_intermed::create_guid();
-            of_ << "int " << size_var_ << " = " << multi_index_multiplication(arg2.indices_) << ";" << new_line(); 
+            ofcpp_ << "int " << size_var_ << " = " << multi_index_multiplication(arg2.indices_) << ";" << new_line(); 
             
             allocation_table_.push_back(permuted_arg2);
             write_allocation(permuted_arg2);
@@ -158,7 +158,7 @@ namespace tcg
          ) const
       {
          auto type = type_as_string(arg1);
-         of_ << "{" << new_line()
+         ofcpp_ << "{" << new_line()
              << "   char tcg_gemm_transa = 'N';" << new_line()
              << "   char tcg_gemm_transb = 'N';" << new_line()
              << "   " << type << " tcg_gemm_alpha = 1.0; " << new_line()
@@ -206,7 +206,7 @@ namespace tcg
             multi_index_type permutation_indices = create_permuted_indices(arg1.indices_, arg1_permutation);
             tac_variable permuted_arg1("permuted" + arg1.name_, permutation_indices, 't');
             size_var_ = "size" + tensor_intermed::create_guid();
-            of_ << "int " << size_var_ << " = " << multi_index_multiplication(arg1.indices_) << ";" << new_line(); 
+            ofcpp_ << "int " << size_var_ << " = " << multi_index_multiplication(arg1.indices_) << ";" << new_line(); 
             
             allocation_table_.push_back(permuted_arg1);
             write_allocation(permuted_arg1);
@@ -221,7 +221,7 @@ namespace tcg
             multi_index_type permutation_indices = create_permuted_indices(arg2.indices_, arg2_permutation);
             tac_variable permuted_arg2("permuted" + arg2.name_, permutation_indices, 't');
             size_var_ = "size" + tensor_intermed::create_guid();
-            of_ << "int " << size_var_ << " = " << multi_index_multiplication(arg2.indices_) << ";" << new_line(); 
+            ofcpp_ << "int " << size_var_ << " = " << multi_index_multiplication(arg2.indices_) << ";" << new_line(); 
             
             allocation_table_.push_back(permuted_arg2);
             write_allocation(permuted_arg2);
@@ -250,71 +250,71 @@ namespace tcg
          //, const permutation_type& permutation
          ) const
       {
-         of_ << "/**************************************** " << new_line()
+         ofcpp_ << "/**************************************** " << new_line()
              << " * PERMUTATION CODE " << new_line()
              << " ****************************************/" << new_line();
-         of_ << "{" << new_line();
+         ofcpp_ << "{" << new_line();
          // start for loops
          for(char idx : arg.indices_)
          {
-            of_ << "for(int i" << idx << " = 0" << "; i" << idx << " < " << idx << "; ++i" << idx << ")" << new_line()
+            ofcpp_ << "for(int i" << idx << " = 0" << "; i" << idx << " < " << idx << "; ++i" << idx << ")" << new_line()
                 << "{" << new_line();
          }
 
          // arg idx
-         of_ << "int arg_idx = ";
+         ofcpp_ << "int arg_idx = ";
          if(arg.indices_.size() > 0)
          {
-            of_ << "i" << arg.indices_[0];
+            ofcpp_ << "i" << arg.indices_[0];
             for(size_t i = 1; i < arg.indices_.size(); ++i)
             {
-               of_ << " + i" << arg.indices_[i];
+               ofcpp_ << " + i" << arg.indices_[i];
                if(i > 0)
                {
                   for(int j = i - 1; j >= 0; --j)
                   {
-                     of_ << "*" << arg.indices_[j];
+                     ofcpp_ << "*" << arg.indices_[j];
                   }
                }
             }
          }
          else
          {
-            of_ << "0";
+            ofcpp_ << "0";
          }
-         of_ << ";" << new_line();
+         ofcpp_ << ";" << new_line();
 
          // permuted idx
-         of_ << "int permuted_idx = ";
+         ofcpp_ << "int permuted_idx = ";
          if(permuted_arg.indices_.size() > 0)
          {
-            of_ << "i" << permuted_arg.indices_[0];
+            ofcpp_ << "i" << permuted_arg.indices_[0];
             for(size_t i = 1; i < permuted_arg.indices_.size(); ++i)
             {
-               of_ << " + i" << permuted_arg.indices_[i];
+               ofcpp_ << " + i" << permuted_arg.indices_[i];
                if(i > 0)
                {
                   for(int j = i - 1; j >= 0; --j)
                   {
-                     of_ << "*" << permuted_arg.indices_[j];
+                     ofcpp_ << "*" << permuted_arg.indices_[j];
                   }
                }
             }
          }
          else
          {
-            of_ << "0";
+            ofcpp_ << "0";
          }
-         of_ << ";" << new_line();
+         ofcpp_ << ";" << new_line();
 
-         of_ << permuted_arg.name_ << "[permuted_idx] = " << arg.name_ << "[arg_idx];" << new_line();
+         ofcpp_ << permuted_arg.name_ << "[permuted_idx] = " << arg.name_ << "[arg_idx];" << new_line();
 
          // end for loops
          for(size_t i = 0; i < arg.indices_.size(); ++i)
          {
-            of_ << "}" << new_line();
+            ofcpp_ << "}" << new_line();
          }
-         of_ << "}" << new_line();
+         ofcpp_ << "}" << new_line();
       }
 
 
@@ -343,8 +343,8 @@ namespace tcg
       void code_generator::write_assignment(const tac& t) const
       {
          size_var_ = "size" + tensor_intermed::create_guid();
-         //of_ << "{" << new_line()
-         of_ << "int " << size_var_ << " = " << multi_index_multiplication(t.arg1_.indices_) << ";" << new_line(); 
+         //ofcpp_ << "{" << new_line()
+         ofcpp_ << "int " << size_var_ << " = " << multi_index_multiplication(t.arg1_.indices_) << ";" << new_line(); 
 
          auto permutation = find_permutation(t.result_.indices_, t.arg1_.indices_);
          
@@ -357,14 +357,14 @@ namespace tcg
             write_permuted_assignment(t.op_, t.arg1_, t.result_, permutation);
          }
          
-         //of_ << "}" << new_line();
+         //ofcpp_ << "}" << new_line();
          size_var_ = "";
       }
 
       /*!
        *
        */
-      void code_generator::generate_code(const tac& t) const
+      void code_generator::operator()(const tac& t) const
       {
          switch(t.op_)
          {
@@ -387,17 +387,84 @@ namespace tcg
       /*!
        *
        */
-      void code_generator::generate_code(const tac_program& t) const
+      void code_generator::operator()(const tac_function& t) const
       {
+         std::stringstream arguments;
+         for(const auto& arg : t.program_.symbol_table_.symbols_)
+         {
+            if(symbol_is_persistent(arg.second))
+            {
+               arguments << symbol_type(arg.second) << " " << symbol_name(arg.second) << ", ";
+            }
+         }
+         auto arguments_str = arguments.str();
+         arguments_str = arguments_str.substr(0, arguments_str.find_last_of(","));
+
+         // hpp
+         ofhpp_ << "void " << t.name_ << "(" << arguments_str << ");" << new_line() << new_line();
+
+         // cpp
+         ofcpp_ << "void " << t.name_ << "(" << arguments_str << ")" << new_line()
+                << "{" << new_line();
+         for(const auto& line : t.program_)
+         {
+            boost::apply_visitor(*this, line);
+         }
+         std::cout << " warning: allocation table flushing not fool-proof yet :CCC " << std::endl;
+         for(const auto& x : allocation_table_)
+         {
+            write_deallocation(x);
+         }
+         allocation_table_.clear();
+         ofcpp_ << "}" << new_line();
+      }
+
+      /*!
+       *
+       */
+      void code_generator::initialize_files() const
+      {
+         // hpp
+         ofhpp_ << "#ifndef TCG_GENERATED_FILE_HPP_INCLUDED" << new_line()
+                << "#define TCG_GENERATED_FILE_HPP_INCLUDED" << new_line() 
+                << new_line()
+                << "#include \"../include/axpy.hpp\"" << new_line()
+                << "#include \"../include/gemm.hpp\"" << new_line()
+                << "#include \"../include/gemv.hpp\"" << new_line() 
+                << new_line();
+         
+         //cpp
+         ofcpp_ << "#include \"" << filename_ << ".hpp\"" << new_line() 
+                << new_line();
+      }
+
+      /*!
+       *
+       */ 
+      void code_generator::finalize_files() const
+      {
+         ofhpp_ << "#endif /* TCG_GENERATED_FILE_HPP_INCLUDED */" << new_line();
+      }
+
+      /*!
+       *
+       */
+      void code_generator::generate_code(const intermediate_program& t) const
+      {
+         initialize_files();
+
          for(const auto& line : t)
          {
-            generate_code(line);
+            boost::apply_visitor(*this, line);
+            //generate_code(line);
          }
          for(const auto& x : allocation_table_)
          {
             write_deallocation(x);
          }
          allocation_table_.clear();
+
+         finalize_files();
       }
    } /* namespace code_gen */
 } /* namespace tcg */

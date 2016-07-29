@@ -12,9 +12,13 @@ namespace tcg
       {
          //!
          code_generator
-            ( std::ofstream& of
+            ( std::ofstream& ofhpp
+            , std::ofstream& ofcpp
+            , const std::string& filename
             )
-            : of_(of)
+            : ofhpp_(ofhpp)
+            , ofcpp_(ofcpp)
+            , filename_(filename)
          {
          }
 
@@ -31,10 +35,17 @@ namespace tcg
          void write_contraction(const tac&) const;
          
          //!
-         void generate_code(const tac&) const;
-         void generate_code(const tac_program&) const;
+         void operator()(const tac&) const;
+         void operator()(const tac_function&) const;
 
-         std::ofstream& of_;
+         //!
+         void initialize_files() const;
+         void finalize_files() const;
+         void generate_code(const intermediate_program&) const;
+
+         std::ofstream& ofhpp_;
+         std::ofstream& ofcpp_;
+         std::string filename_;
          mutable std::list<tac_variable> allocation_table_;
 
          mutable std::string size_var_ = "";

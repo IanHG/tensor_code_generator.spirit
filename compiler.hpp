@@ -7,6 +7,7 @@
 #include <vector>
 #include <tuple>
 #include <stack>
+#include <iostream>
 #include <boost/assert.hpp>
 
 #include "ast.hpp"
@@ -31,6 +32,70 @@ namespace tcg
          os << "]";
          return os;
       }
+      
+      /***************************************************************************
+       * Symbol table
+       ***************************************************************************/
+      struct symbol
+      {  
+         std::string name_;
+         char utype_;
+         char ptype_;
+         char pflag_;
+      };
+
+      inline std::string symbol_name(const symbol& sym)
+      {
+         return sym.name_;
+      }
+
+      inline std::string symbol_type(const symbol& sym)
+      {
+         std::string type;
+         switch(sym.utype_)
+         {
+            case 'f': type += "float" ; break;
+            case 'd': type += "double"; break;
+            case 'c': type += "std::complex<float>" ; break;
+            case 'z': type += "std::complex<double>"; break;
+            case 'i': type += "int"; break;
+            default: BOOST_ASSERT(0);
+         }
+         type += (sym.ptype_ == 'p' ? "*" : "");
+         return type;
+      }
+
+      inline bool symbol_is_persistent(const symbol& sym)
+      {
+         return sym.pflag_ == 'p';
+      }
+
+      struct symbol_table
+      {
+         symbol_table(symbol_table* prev = nullptr)
+            : enclosing_table_(prev)
+         {
+         }
+
+         void put(const std::string& s, const symbol& sym)
+         {
+            symbols_.emplace(s, sym);
+         }
+
+         symbol* get(const std::string& s)
+         {
+            for(symbol_table* t = this; t != nullptr; t = t->enclosing_table_)
+            {
+               auto isym = t->symbols_.find(s);
+               if(isym != t->symbols_.end()) return &((*isym).second);
+            }
+            return nullptr;
+         }
+
+         std::map<std::string, symbol> symbols_;
+         symbol_table* enclosing_table_ = nullptr;
+      };
+
       /***************************************************************************
        * TAC stuff
        ***************************************************************************/
@@ -46,6 +111,7 @@ namespace tcg
          std::string name_;
          multi_index_type indices_;
          char utype_ = 'd'; // type flag: f (float), d (double), c (complex float), z (complex double)
+         char ptype_ = 'p'; // pointer type : p (pointer), v (value)
          char pflag_;       // persistence flag: p (persistent), t (temporary)
       };
 
@@ -98,18 +164,48 @@ namespace tcg
          os << t.result_ << " = " << t.arg1_ << " " << t.op_ << " " << t.arg2_;
          return os;
       }
+      
+      struct tac_function;
 
-      struct tac_program: public std::list<tac>
+      struct intermediate_tac
+         : x3::variant
+           < tac
+           , x3::forward_ast<tac_function>
+           >
       {
+         using base_type::base_type;
+         using base_type::operator=;
+      };
+
+      struct intermediate_program: public std::list<intermediate_tac>
+      {
+         intermediate_program(symbol_table* prev = nullptr)
+            : symbol_table_(prev)
+         {
+         }
+
          void op(ast::optoken);
-         void add_variable(const tac_variable& v) { variable_stack_.push(v); }
+         void add_variable(const tac_variable& v);
          
          //std::map<std::string, tensor_intermed> intermed_table_;
 
          std::stack<tac_variable> variable_stack_;
+         symbol_table symbol_table_;
+      };
+      
+      struct tac_function
+      {
+         tac_function(const std::string& name, symbol_table* prev)
+            : name_(name)
+            , program_(prev)
+         {
+         }
+
+         std::string name_;
+         intermediate_program program_;
       };
 
-      inline std::ostream& operator<<(std::ostream& os, const tac_program& t)
+      inline std::ostream& operator<<(std::ostream& os, const intermediate_program& t)
       {
          for(const auto& x : t)
             os << x << std::endl;
@@ -142,40 +238,6 @@ namespace tcg
 
       multi_index_type create_permuted_indices(const multi_index_type&, const permutation_type&);
 
-      /***************************************************************************
-       * Symbol table
-       ***************************************************************************/
-      struct symbol
-      {  
-         std::string name_;
-         char pflag_;
-      };
-
-      struct symbol_table
-      {
-         symbol_table(symbol_table* prev = nullptr)
-            : enclosing_table_(prev)
-         {
-         }
-
-         void put(const std::string& s, const symbol& sym)
-         {
-            symbols_.emplace(s, sym);
-         }
-
-         symbol* get(const std::string& s)
-         {
-            for(symbol_table* t = this; t != nullptr; t = t->enclosing_table_)
-            {
-               auto isym = t->symbols_.find(s);
-               if(isym != t->symbols_.end()) return &((*isym).second);
-            }
-            return nullptr;
-         }
-
-         std::map<std::string, symbol> symbols_;
-         symbol_table* enclosing_table_ = nullptr;
-      };
 
       /***************************************************************************
        * Compiler
@@ -220,10 +282,10 @@ namespace tcg
          //! constructor
          template<class ErrorHandler>
          compiler
-          ( tac_program& tac
+          ( intermediate_program& tac
           , const ErrorHandler& error_handler
           )
-          : tac_program_(tac)
+          : intermediate_program_(tac)
           , error_handler_
             ( [&](x3::position_tagged pos, const std::string& msg) { error_handler(pos, msg); }
             )
@@ -231,34 +293,33 @@ namespace tcg
           }
 
          //! handle nil node in ast
-         bool operator()(const ast::nil& x ) const { BOOST_ASSERT(0); return false; }
+         bool operator()(const ast::nil& x, intermediate_program& prog) const { BOOST_ASSERT(0); return false; }
 
          //! handle expression nodes in ast
-         bool operator()(const double& x) const;
-         bool operator()(const unsigned& x) const;
-         bool operator()(const bool& x) const;
-         bool operator()(const ast::variable& x) const;
-         bool operator()(const ast::tensor_litteral& x) const;
-         bool operator()(const ast::operation& x) const;
-         bool operator()(const ast::unary& x) const;
-         bool operator()(const ast::expression& x) const;
+         bool operator()(const double& x, intermediate_program& prog) const;
+         bool operator()(const unsigned& x, intermediate_program& prog) const;
+         bool operator()(const bool& x, intermediate_program& prog) const;
+         bool operator()(const ast::variable& x, intermediate_program& prog) const;
+         bool operator()(const ast::tensor_litteral& x, intermediate_program& prog) const;
+         bool operator()(const ast::operation& x, intermediate_program& prog) const;
+         bool operator()(const ast::unary& x, intermediate_program& prog) const;
+         bool operator()(const ast::expression& x, intermediate_program& prog) const;
 
          
          //! handle statement nodes in ast
-         bool operator()(const ast::statement& x) const;
-         bool operator()(const ast::statement_list& x) const;
-         bool operator()(const ast::variable_declaration& x) const;
-         bool operator()(const ast::assignment& x) const;
-         bool operator()(const ast::if_statement& x) const;
-         bool operator()(const ast::while_statement& x) const;
-         bool operator()(const ast::function_definition& x) const;
+         bool operator()(const ast::statement& x, intermediate_program& prog) const;
+         bool operator()(const ast::statement_list& x, intermediate_program& prog) const;
+         bool operator()(const ast::variable_declaration& x, intermediate_program& prog) const;
+         bool operator()(const ast::assignment& x, intermediate_program& prog) const;
+         bool operator()(const ast::if_statement& x, intermediate_program& prog) const;
+         bool operator()(const ast::while_statement& x, intermediate_program& prog) const;
+         bool operator()(const ast::function_definition& x, intermediate_program& prog) const;
 
          //! start compilation
          bool start(const ast::statement_list& x) const;
 
-         tac_program& tac_program_;
+         intermediate_program& intermediate_program_;
          error_handler_type error_handler_;
-         symbol_table symbol_table_;
       };
    } /* namespace code_gen */
 } /* namespace tcg */
