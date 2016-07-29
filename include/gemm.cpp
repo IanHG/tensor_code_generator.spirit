@@ -1,4 +1,4 @@
-#include "gemm.hpp"
+#include "tcg/gemm.hpp"
 
 extern "C"
 {
