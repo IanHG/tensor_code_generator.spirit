@@ -17,9 +17,10 @@ int main()
    while(std::getline(ifs, str))
    {
       int return_value;
+      std::string dir = str + ".tc_test";
       
       // change dir
-      return_value = chdir(str.c_str());
+      return_value = chdir(dir.c_str());
       return_value = std::system("pwd");
 
       // run tcg

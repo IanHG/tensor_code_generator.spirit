@@ -1,0 +1,4 @@
+function func1()
+{
+   A[ij] = B[ij] + C[ij] + D[ij];
+}
