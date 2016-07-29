@@ -268,7 +268,7 @@ namespace tcg
        */
       bool compiler::operator()(const double& x, intermediate_program& prog) const
       {
-         std::cout << " double " << x << std::endl;
+         BOOST_ASSERT(0);
          return true;
       }
       
@@ -277,7 +277,6 @@ namespace tcg
        */
       bool compiler::operator()(const unsigned& x, intermediate_program& prog) const
       {
-         std::cout << " unsigned " << x << std::endl;
          BOOST_ASSERT(0);
          return true;
       }
@@ -287,7 +286,6 @@ namespace tcg
        */
       bool compiler::operator()(const bool& x, intermediate_program& prog) const
       {
-         std::cout << " bool " << x << std::endl;
          BOOST_ASSERT(0);
          return true;
       }
@@ -297,7 +295,6 @@ namespace tcg
        */
       bool compiler::operator()(const ast::variable& x, intermediate_program& prog) const
       {
-         std::cout << " variable " << x.name_ << std::endl;
          BOOST_ASSERT(0);
          return true;
       }
@@ -307,12 +304,6 @@ namespace tcg
        */
       bool compiler::operator()(const ast::tensor_litteral& x, intermediate_program& prog) const
       {
-         std::cout << " tensor " << x.name_ << "  ";
-         for(size_t i = 0; i < x.indices_.size(); ++i)
-         {
-            std::cout << " " << x.indices_[i];
-         }
-         std::cout << std::endl;
          tac_variable t(x.name_, x.indices_, 'p');
          prog.add_variable(t);
          return true;
@@ -323,7 +314,6 @@ namespace tcg
        */
       bool compiler::operator()(const ast::operation& x, intermediate_program& prog) const
       {
-         std::cout << " operation " << std::endl;
          //if(!boost::apply_visitor(*this, x.operand_))
          if(!boost::apply_visitor([&](auto& x){ return (*this)(x, prog); }, x.operand_))
          {
@@ -348,7 +338,6 @@ namespace tcg
        */
       bool compiler::operator()(const ast::unary& x, intermediate_program& prog) const
       {
-         std::cout << " unary " << std::endl;
          BOOST_ASSERT(0);
          //if(!boost::apply_visitor(*this, x.operand_))
          if(!boost::apply_visitor([&](auto& x){ return (*this)(x, prog); }, x.operand_))
@@ -416,7 +405,6 @@ namespace tcg
        */
       bool compiler::operator()(const ast::variable_declaration& x, intermediate_program& prog) const
       {
-         std::cout << " variable declaration not implemented yet in compiler " << std::endl;
          BOOST_ASSERT(0);
          return true;
       }
@@ -426,7 +414,6 @@ namespace tcg
        */
       bool compiler::operator()(const ast::assignment& x, intermediate_program& prog) const
       {
-         std::cout << " assignment statement " << std::endl;
          if(!(*this)(x.rhs_, prog))
          {
             return false;
@@ -445,7 +432,6 @@ namespace tcg
        */
       bool compiler::operator()(const ast::if_statement& x, intermediate_program& prog) const
       {
-         std::cout << " if statement not implemented yet in compiler " << std::endl;
          BOOST_ASSERT(0);
          return true;
       }
@@ -455,7 +441,6 @@ namespace tcg
        */
       bool compiler::operator()(const ast::while_statement& x, intermediate_program& prog) const
       {
-         std::cout << " while statement not implemented yet in compiler " << std::endl;
          BOOST_ASSERT(0);
          return true;
       }
@@ -465,8 +450,6 @@ namespace tcg
        */
       bool compiler::operator()(const ast::function_definition& x, intermediate_program& prog) const
       {
-         //std::cout << " function definition not implemented yet in compiler " << std::endl;
-         //BOOST_ASSERT(0);
          tac_function f(x.name_, &prog.symbol_table_);
          if(!(*this)(x.body_, f.program_))
          {

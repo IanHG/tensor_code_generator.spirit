@@ -1,0 +1,5 @@
+// i = 4, j = 3, k = 2
+function func1()
+{
+   A[ji] = (B[ik] + C[ki]) * D[jk]; // this is a comment
+}

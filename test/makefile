@@ -1,5 +1,5 @@
-OBJ=unittest.cpp 
-FUNC=../compiler.cpp
+OBJ=framework_test.cpp
+FUNC=
 CXX=g++
 CXXOPTIMFLAGS=-O3
 CXXDEBUGFLAGS=-g -O0

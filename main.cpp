@@ -10,9 +10,16 @@
 #include "compiler.hpp"
 #include "code_generator.hpp"
 
-int main()
+int main(int argc, char* argv[])
 {
-   std::ifstream inp("test.tc_inp");
+   if(argc != 3)
+   {
+      std::cout << "Must provide 2 arguments" << std::endl;
+      return 1;
+   }
+   std::string input_filename(argv[1]);
+   std::string output_filename(argv[2]);
+   std::ifstream inp(input_filename);
    inp.unsetf(std::ios::skipws);
    std::string source;
    std::copy
@@ -49,7 +56,8 @@ int main()
    
    if(success && iter == end)
    {
-      std::cout << " success!!" << std::endl;
+      std::cout << " Parsed successfully!!" << std::endl;
+      
       tcg::code_gen::intermediate_program t;
       tcg::code_gen::compiler c(t, error_handler);
       if(!c.start(ast))
@@ -57,9 +65,9 @@ int main()
          std::cout << " Compilation failed " << std::endl;
       }
       std::cout << t << std::endl;
-      std::ofstream ofhpp("test.hpp", std::ofstream::out | std::ofstream::trunc);
-      std::ofstream ofcpp("test.cpp", std::ofstream::out | std::ofstream::trunc);
-      tcg::code_gen::code_generator gen(ofhpp, ofcpp, "test");
+      std::ofstream ofhpp(output_filename + ".hpp", std::ofstream::out | std::ofstream::trunc);
+      std::ofstream ofcpp(output_filename + ".cpp", std::ofstream::out | std::ofstream::trunc);
+      tcg::code_gen::code_generator gen(ofhpp, ofcpp, output_filename);
       gen.generate_code(t);
    }
    else

@@ -1,8 +1,0 @@
-/*
- * this is also a comment
- */
-//implicit all; // <--- make something like this!
-function func1()
-{
-   A[ji] = (B[ik] + C[ki]) * D[jk]; // this is a comment
-}

@@ -7,8 +7,8 @@ CXXDEBUGFLAGS=-g -O0
 LIBS=-pthread -lboost_system -lblas -llapack
 
 # link
-tcg.x: $(OBJS)
-	$(CXX) $(CXXOPTIMFLAGS) $(OBJS) -o tcg.x $(LIBS)
+bin/tcg.x: $(OBJS)
+	$(CXX) $(CXXOPTIMFLAGS) $(OBJS) -o bin/tcg.x $(LIBS)
 
 # pull dependencies for existing .o files
 -include $(OBJS:.o=.d)

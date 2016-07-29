@@ -428,9 +428,9 @@ namespace tcg
          ofhpp_ << "#ifndef TCG_GENERATED_FILE_HPP_INCLUDED" << new_line()
                 << "#define TCG_GENERATED_FILE_HPP_INCLUDED" << new_line() 
                 << new_line()
-                << "#include \"../include/axpy.hpp\"" << new_line()
-                << "#include \"../include/gemm.hpp\"" << new_line()
-                << "#include \"../include/gemv.hpp\"" << new_line() 
+                << "#include <tcg/axpy.hpp>" << new_line()
+                << "#include <tcg/gemm.hpp>" << new_line()
+                << "#include <tcg/gemv.hpp>" << new_line() 
                 << new_line();
          
          //cpp
