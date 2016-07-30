@@ -14,6 +14,7 @@ int main()
 
    std::string tcg = "../../bin/tcg.x";
    
+   bool success = true;
    while(std::getline(ifs, str))
    {
       int return_value;
@@ -26,6 +27,10 @@ int main()
       // run tcg
       std::string tcg_command = tcg + " " + str + ".tc " + str + "_generated";
       return_value = std::system(tcg_command.c_str());
+      if(return_value)
+      {
+         success = false;
+      }
       
       // compile tc
       std::string cc = cxx + " " + cxxflags + " -o main " + str + ".cpp " + str + "_generated.cpp " + libs;
@@ -33,6 +38,7 @@ int main()
       if(return_value)
       {
          std::cout << " compilation failed : " << str << std::endl;
+         success = false;
       }
 
       // run tc
@@ -41,12 +47,20 @@ int main()
       if(return_value)
       {
          std::cout << " tc run failed : " << str << std::endl;
+         success = false;
       }
 
       // change back to 'main' dir
       return_value = chdir("..");
       return_value = std::system("pwd");
    }
+   
+   std::cout << "*=========================================================*" << std::endl;
+   if(success)
+      std::cout << "* SUCCESS ! " << std::endl;
+   else
+      std::cout << "* FAILED ! " << std::endl;
+   std::cout << "*=========================================================*" << std::endl;
 
    return 0;
 }
