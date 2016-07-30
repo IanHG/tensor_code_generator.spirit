@@ -1,0 +1,4 @@
+function func1()
+{
+   A[ijl] = B[ijk] * C[kl];
+}
