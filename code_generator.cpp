@@ -130,8 +130,9 @@ namespace tcg
          if(!is_unit_permutation(arg2_permutation))
          {
             auto saved_size_var = size_var_;
-            multi_index_type permutation_indices = create_permuted_indices(arg2.indices_, arg2_permutation);
-            tac_variable permuted_arg2("permuted" + arg2.name_, permutation_indices, 't');
+            //multi_index_type permutation_indices = create_permuted_indices(arg2.indices_, arg2_permutation);
+            //tac_variable permuted_arg2("permuted" + arg2.name_, permutation_indices, 't');
+            tac_variable permuted_arg2("permuted" + arg2.name_, t.result_.indices_, 't');
             size_var_ = "size" + tensor_intermed::create_guid();
             ofcpp_ << "int " << size_var_ << " = " << multi_index_multiplication(arg2.indices_) << ";" << new_line(); 
             
@@ -261,8 +262,8 @@ namespace tcg
          ) const
       {
          ofcpp_ << "/**************************************** " << new_line()
-             << " * PERMUTATION CODE " << new_line()
-             << " ****************************************/" << new_line();
+                << " * PERMUTATION CODE " << new_line()
+                << " ****************************************/" << new_line();
          ofcpp_ << "{" << new_line();
          // start for loops
          for(char idx : arg.indices_)
