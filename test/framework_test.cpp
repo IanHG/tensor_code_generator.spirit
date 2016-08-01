@@ -30,7 +30,7 @@ int main()
       return_value = std::system("pwd");
 
       // run tcg
-      std::string tcg_command = tcg + " " + str + ".tc " + str + "_generated";
+      std::string tcg_command = tcg + " -i " + str + ".tc -o " + str + "_generated";
       return_value = std::system(tcg_command.c_str());
       if(return_value)
       {

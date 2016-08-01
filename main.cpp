@@ -2,24 +2,22 @@
 #include <string>
 #include <fstream>
 
-//#include <boost/spirit/include/support_istream_iterator.hpp>
-
 #include "ast.hpp"
 #include "config.hpp"
 #include "error_handler.hpp"
 #include "compiler.hpp"
 #include "code_generator.hpp"
+#include "../commandline/commandline.hpp"
 
 int main(int argc, char* argv[])
 {
-   if(argc != 3)
-   {
-      std::cout << "Must provide 2 arguments" << std::endl;
-      return 1;
-   }
-   std::string input_filename(argv[1]);
-   std::string output_filename(argv[2]);
-   std::ifstream inp(input_filename);
+   auto cc = commandline::parser()
+      .option<std::string>("input", "-i")
+      .option<std::string>("output","-o")
+      .parse(argc, argv);
+   
+   std::string output_filename = cc.get<std::string>("output");
+   std::ifstream inp(cc.get<std::string>("input"));
    inp.unsetf(std::ios::skipws);
    std::string source;
    std::copy
