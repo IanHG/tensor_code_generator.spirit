@@ -2,9 +2,9 @@
 #include <chrono>
 #include <limits>
 #include <fstream>
-#include "../../../../libmda/arrays/SDArray2D.h"
-#include "../../../../libmda/arrays/MultiDimArray.h"
-#include "../../../../libmda/util/rand_seed.h"
+#include "../../../../../libmda/arrays/SDArray2D.h"
+#include "../../../../../libmda/arrays/MultiDimArray.h"
+#include "../../../../../libmda/util/rand_seed.h"
 
 //using matrix_type = midas::mmv::SDArray2D<double>;
 using vector_type = libmda::MDA<double, 1>;
@@ -23,6 +23,7 @@ void fill_random(T& mat)
 void print(const tensor_type& tens, const std::string& str)
 {
    std::ofstream of(str);
+   of << std::showpos;
    using limit_type = std::numeric_limits<typename tensor_type::value_type>;
    of << std::scientific;
    of << std::setprecision(limit_type::max_digits10);
@@ -37,6 +38,7 @@ void print(const tensor_type& tens, const std::string& str)
 void print(const matrix_type& mat, const std::string& str)
 {
    std::ofstream of(str);
+   of << std::showpos;
    using limit_type = std::numeric_limits<typename matrix_type::value_type>;
    of << std::scientific;
    of << std::setprecision(limit_type::max_digits10);
@@ -50,6 +52,7 @@ void print(const matrix_type& mat, const std::string& str)
 void print(const vector_type& vec, const std::string& str)
 {
    std::ofstream of(str);
+   of << std::showpos;
    using limit_type = std::numeric_limits<typename vector_type::value_type>;
    of << std::scientific;
    of << std::setprecision(limit_type::max_digits10);
@@ -84,9 +87,9 @@ int main()
    auto diff = stop - start;
    std::cout << std::chrono::duration<double, std::milli>(diff).count() << "ms" << std::endl; 
 
-   print(matA, "A.mat");
-   print(matB, "B.mat");
-   print(matC, "C.mat");
+   print(matA, "A.data");
+   print(matB, "B.data");
+   print(matC, "C.data");
 
    return 0;
 }

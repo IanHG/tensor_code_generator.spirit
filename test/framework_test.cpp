@@ -13,10 +13,15 @@ int main()
    std::string libs = "../gen/general.cpp ../../lib/libtcg.a -llapack -lblas";
 
    std::string tcg = "../../bin/tcg.x";
+
+   bool cleanup = true;
    
    bool success = true;
+   std::cout << "*================================================================*" << std::endl;
+   std::cout << " START FRAMEWORK TEST " << std::endl;
    while(std::getline(ifs, str))
    {
+      std::cout << "*----------------------------- " + str + " -----------------------------*" << std::endl;
       int return_value;
       std::string dir = str + ".tc_test";
       
@@ -50,17 +55,30 @@ int main()
          success = false;
       }
 
+      // output
+      std::cout << "******************************************************************" << std::endl;
+      std::cout << "* " << str << " " << (success ? " ! SUCCESS ! " : " ! FAILED ! ") << std::endl;
+      std::cout << "******************************************************************" << std::endl << std::endl;
+      
+      // clean-up
+      if(success && cleanup)
+      {
+         auto rm_command = "rm " + str + "_generated.cpp " + str + "_generated.hpp main";
+         return_value = std::system(rm_command.c_str());
+      }
+      
+
       // change back to 'main' dir
       return_value = chdir("..");
-      return_value = std::system("pwd");
+      //return_value = std::system("pwd");
    }
    
-   std::cout << "*=========================================================*" << std::endl;
+   std::cout << "*================================================================*" << std::endl;
    if(success)
       std::cout << "* SUCCESS ! " << std::endl;
    else
       std::cout << "* FAILED ! " << std::endl;
-   std::cout << "*=========================================================*" << std::endl;
+   std::cout << "*================================================================*" << std::endl;
 
    return 0;
 }

@@ -2,8 +2,8 @@
 #include <chrono>
 #include <limits>
 #include <fstream>
-#include "../../../../libmda/arrays/SDArray2D.h"
-#include "../../../../libmda/util/rand_seed.h"
+#include "../../../../../libmda/arrays/SDArray2D.h"
+#include "../../../../../libmda/util/rand_seed.h"
 
 using mat_type = midas::mmv::SDArray2D<double>;
 
@@ -21,6 +21,7 @@ void fill_random(mat_type& mat)
 void print(const mat_type& mat, const std::string& str)
 {
    std::ofstream of(str);
+   of << std::showpos;
    using limit_type = std::numeric_limits<typename mat_type::value_type>;
    of << std::scientific;
    of << std::setprecision(limit_type::max_digits10);
@@ -60,10 +61,10 @@ int main()
    auto diff = stop - start;
    std::cout << std::chrono::duration<double, std::milli>(diff).count() << "ms" << std::endl; 
 
-   print(matA, "A.mat");
-   print(matB, "B.mat");
-   print(matC, "C.mat");
-   print(matD, "D.mat");
+   print(matA, "A.data");
+   print(matB, "B.data");
+   print(matC, "C.data");
+   print(matD, "D.data");
 
    return 0;
 }

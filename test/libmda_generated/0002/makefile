@@ -3,7 +3,7 @@ FUNC=
 CXX=g++
 CXXOPTIMFLAGS=-O3
 CXXDEBUGFLAGS=-g -O0
-LIBS=-I ../../../include ../../../lib/libtcg.a -lblas -llapack -lboost_system ../../../../libmda/lib/libmda.a
+LIBS=-I ../../../include ../../../lib/libtcg.a -lblas -llapack -lboost_system ../../../../../libmda/lib/libmda.a
 
 gcc: $(OBJ) $(FUNC)
 	$(CXX) $(CXXOPTIMFLAGS) -fexpensive-optimizations -Drestrict= -std=c++14 -o main $(OBJ) $(FUNC) $(LIBS)

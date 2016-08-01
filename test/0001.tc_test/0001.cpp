@@ -12,9 +12,9 @@ double* B = new double[size];
 double* C = new double[size];
 double* D = new double[size];
 
-fill_from_file(B, size, "B.mat");
-fill_from_file(C, size, "C.mat");
-fill_from_file(D, size, "D.mat");
+fill_from_file(B, size, "B.data");
+fill_from_file(C, size, "C.data");
+fill_from_file(D, size, "D.data");
 
 /******
  * FILL IN CODE HERE
@@ -25,7 +25,7 @@ func1(A, B, C, D, i, j);
  *****/
 
 double* A_check = new double[size];
-fill_from_file(A_check, size, "A.mat");
+fill_from_file(A_check, size, "A.data");
 auto check = check_result(A, A_check, size);
 
 delete[] A;

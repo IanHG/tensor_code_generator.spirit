@@ -6,9 +6,10 @@
 //! fill pointer from file
 void fill_from_file(double* pd, int size, const std::string& filename);
 
-//void print(double* pd, int size);
-
 //! check against result
-bool check_result(double* d, double* e, int size);
+bool check_result(double* d, double* e, int size, int ulps = 2);
+
+//! print pointer (for debug)
+void print(double* pd, int size);
 
 #endif /* TCG_TEST_GENERAL_HPP_INCLUDED */

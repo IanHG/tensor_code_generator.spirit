@@ -15,8 +15,8 @@ double* B = new double[sizeb];
 int sizec = k*l; 
 double* C = new double[sizec];
 
-fill_from_file(B, sizeb, "B.mat");
-fill_from_file(C, sizec, "C.mat");
+fill_from_file(B, sizeb, "B.data");
+fill_from_file(C, sizec, "C.data");
 
 /******
  * FILL IN CODE HERE
@@ -27,7 +27,7 @@ func1(A, B, C, i, j, k,l);
  *****/
 
 double* A_check = new double[sizea];
-fill_from_file(A_check, sizea, "A.mat");
+fill_from_file(A_check, sizea, "A.data");
 auto check = check_result(A, A_check, sizea);
 
 delete[] A;

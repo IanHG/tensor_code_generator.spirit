@@ -32,6 +32,21 @@ namespace tcg
          os << "]";
          return os;
       }
+
+      inline std::ostream& operator<<(std::ostream& os, const permutation_type& p)
+      {
+         os << "p{";
+         if(p.size() > 0)
+         {
+            for(size_t i = 0; i < p.size() - 1; ++i)
+            {
+               os << p[i] << ",";
+            }
+            os << p[p.size() - 1];
+         }
+         os << "}";
+         return os;
+      }
       
       /***************************************************************************
        * Symbol table

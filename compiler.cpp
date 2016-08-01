@@ -144,8 +144,8 @@ namespace tcg
          permutation_type permutation;
          for(const auto& x : m2)
          {
-            int position = 0;
             bool found = false;
+            int position = 0;
             for(const auto& y : m1)
             {
                if(x == y)
@@ -182,10 +182,16 @@ namespace tcg
       {
          assert(m.size() == p.size());
          multi_index_type permuted_indices;
+         //std::cout << " CREATE PERMUTED INDICES " << std::endl;
+         //std::cout << m << std::endl;
+         //std::cout << p << std::endl;
          for(const auto& i : p)
          {
+            //std::cout << i << " " << m[i] << std::endl;
             permuted_indices.emplace_back(m[i]);
          }
+         //std::cout << permuted_indices << std::endl;
+         //std::cout << " ======================== " << std::endl;
          return permuted_indices;
       }
       /***************************************************************************

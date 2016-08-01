@@ -29,7 +29,7 @@ namespace tcg
          void write_permuted_assignment(ast::optoken, const tac_variable&, const tac_variable&, const permutation_type&) const;
          void write_axpy(ast::optoken, const tac_variable&, const tac_variable&) const;
          void write_gemm(const tac_variable&, const tac_variable&, const tac_variable&, const std::tuple<std::string, std::string, std::string>&) const;
-         void write_permutation(const tac_variable& arg, const tac_variable& permuted_arg) const;
+         void write_permutation(ast::optoken op, const tac_variable& arg, const tac_variable& permuted_arg) const;
          void write_sum(const tac&) const;
          void write_assignment(const tac&) const;
          void write_contraction(const tac&) const;

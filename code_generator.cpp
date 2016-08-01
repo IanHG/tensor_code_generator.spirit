@@ -34,12 +34,12 @@ namespace tcg
       std::string multi_index_multiplication(const multi_index_type& m)
       {
          std::string str;
-         for(size_t i = 0; i < m.size() - 1; ++i)
-         {
-            str += index_prefix() + m[i] + "*";
-         }
          if(m.size() > 0)
          {
+            for(size_t i = 0; i < m.size() - 1; ++i)
+            {
+               str += index_prefix() + m[i] + "*";
+            }
             str += index_prefix() + m[m.size() - 1];
          }
          return str;
@@ -137,7 +137,7 @@ namespace tcg
             
             allocation_table_.push_back(permuted_arg2);
             write_allocation(permuted_arg2);
-            write_permutation(arg2, permuted_arg2);
+            write_permutation(ast::op_equal, arg2, permuted_arg2);
             
             arg2 = permuted_arg2;
             size_var_ = saved_size_var;
@@ -188,6 +188,9 @@ namespace tcg
          }
          
          // find contraction indices
+         //std::cout << " arg1   : " << t.arg1_.indices_ << std::endl;
+         //std::cout << " arg2   : " << t.arg2_.indices_ << std::endl;
+         //std::cout << " result : " << t.result_.indices_ << std::endl;
          auto overlap_indices = find_overlapping_indices(t.arg2_.indices_, t.arg1_.indices_);
          auto arg1_remaining_indices = remove_indices(t.arg1_.indices_, overlap_indices);
          auto arg2_remaining_indices = remove_indices(t.arg2_.indices_, overlap_indices);
@@ -196,21 +199,26 @@ namespace tcg
          auto arg2_indices = catenate(overlap_indices, arg2_remaining_indices);
 
          auto arg1_permutation = find_permutation(arg1_indices, t.arg1_.indices_);
+         //std::cout << " arg1 indices " << arg1_indices << std::endl;
+         //std::cout << " arg1 permutation " << arg1_permutation << std::endl;
          auto arg2_permutation = find_permutation(arg2_indices, t.arg2_.indices_);
+         //std::cout << " arg2 indices " << arg2_indices << std::endl;
+         //std::cout << " arg2 permutation " << arg2_permutation << std::endl;
          
          auto arg1 = t.arg1_;
          auto arg2 = t.arg2_;
          if(!is_unit_permutation(arg1_permutation)) 
          {
             auto saved_size_var = size_var_;
-            multi_index_type permutation_indices = create_permuted_indices(arg1.indices_, arg1_permutation);
-            tac_variable permuted_arg1("permuted" + arg1.name_, permutation_indices, 't');
+            //multi_index_type permutation_indices = create_permuted_indices(arg1.indices_, arg1_permutation);
+            //tac_variable permuted_arg1("permuted" + arg1.name_, permutation_indices, 't');
+            tac_variable permuted_arg1("permuted" + arg1.name_, arg1_indices, 't');
             size_var_ = "size" + tensor_intermed::create_guid();
             ofcpp_ << "int " << size_var_ << " = " << multi_index_multiplication(arg1.indices_) << ";" << new_line(); 
             
             allocation_table_.push_back(permuted_arg1);
             write_allocation(permuted_arg1);
-            write_permutation(arg1, permuted_arg1);
+            write_permutation(ast::op_equal, arg1, permuted_arg1);
             
             arg1 = permuted_arg1;
             size_var_ = saved_size_var;
@@ -218,14 +226,15 @@ namespace tcg
          if(!is_unit_permutation(arg2_permutation))
          {
             auto saved_size_var = size_var_;
-            multi_index_type permutation_indices = create_permuted_indices(arg2.indices_, arg2_permutation);
-            tac_variable permuted_arg2("permuted" + arg2.name_, permutation_indices, 't');
+            //multi_index_type permutation_indices = create_permuted_indices(arg2.indices_, arg2_permutation);
+            //tac_variable permuted_arg2("permuted" + arg2.name_, permutation_indices, 't');
+            tac_variable permuted_arg2("permuted" + arg2.name_, arg2_indices, 't');
             size_var_ = "size" + tensor_intermed::create_guid();
             ofcpp_ << "int " << size_var_ << " = " << multi_index_multiplication(arg2.indices_) << ";" << new_line(); 
             
             allocation_table_.push_back(permuted_arg2);
             write_allocation(permuted_arg2);
-            write_permutation(arg2, permuted_arg2);
+            write_permutation(ast::op_equal, arg2, permuted_arg2);
             
             arg2 = permuted_arg2;
             size_var_ = saved_size_var;
@@ -234,9 +243,9 @@ namespace tcg
          auto extent1 = multi_index_multiplication(arg1_remaining_indices);
          auto extent2 = multi_index_multiplication(arg2_remaining_indices);
          auto extent3 = multi_index_multiplication(overlap_indices);
-         std::tuple<std::string, std::string, std::string> extents{ extent1
-                                                                  , extent2
-                                                                  , extent3
+         std::tuple<std::string, std::string, std::string> extents{ extent1 == "" ? "1" : extent1
+                                                                  , extent2 == "" ? "1" : extent2
+                                                                  , extent3 == "" ? "1" : extent3
                                                                   };
          write_gemm(arg1, arg2, t.result_, extents);
       }
@@ -245,7 +254,8 @@ namespace tcg
        *
        */
       void code_generator::write_permutation
-         ( const tac_variable& arg
+         ( ast::optoken op
+         , const tac_variable& arg
          , const tac_variable& permuted_arg
          //, const permutation_type& permutation
          ) const
@@ -307,7 +317,7 @@ namespace tcg
          }
          ofcpp_ << ";" << new_line();
 
-         ofcpp_ << permuted_arg.name_ << "[permuted_idx] = " << arg.name_ << "[arg_idx];" << new_line();
+         ofcpp_ << permuted_arg.name_ << "[permuted_idx] " << op_as_string(op) << " " << arg.name_ << "[arg_idx];" << new_line();
 
          // end for loops
          for(size_t i = 0; i < arg.indices_.size(); ++i)
@@ -328,13 +338,16 @@ namespace tcg
          , const permutation_type& permutation
          ) const
       {
-         multi_index_type permutation_indices = create_permuted_indices(arg1.indices_, permutation);
-         tac_variable permuted_arg1("permuted" + arg1.name_, permutation_indices, 't');
-         
-         allocation_table_.push_back(permuted_arg1);
-         write_allocation(permuted_arg1);
-         write_permutation(arg1, permuted_arg1);
-         write_assignment_loop(op, permuted_arg1, result);
+         write_permutation(op, arg1, result);
+
+         // ! BELOW IS BUGGY ! 
+         //multi_index_type permutation_indices = create_permuted_indices(result.indices_, permutation);
+         //tac_variable permuted_arg1("permuted" + arg1.name_, permutation_indices, 't');
+         //
+         //allocation_table_.push_back(permuted_arg1);
+         //write_allocation(permuted_arg1);
+         //write_permutation(op, arg1, permuted_arg1);
+         //write_assignment_loop(op, permuted_arg1, result);
       }
 
       /*!
