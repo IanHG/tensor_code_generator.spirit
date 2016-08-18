@@ -194,6 +194,17 @@ namespace tcg
          //std::cout << " ======================== " << std::endl;
          return permuted_indices;
       }
+
+      std::string permutation_to_string(const permutation_type& perm)
+      {
+         std::stringstream str;
+         for(const auto& p : perm)
+         {
+            str << p;
+         }
+         return str.str();
+      }
+
       /***************************************************************************
        * TAC program
        ***************************************************************************/
@@ -237,6 +248,11 @@ namespace tcg
                auto result = tac_variable(tensor_intermed::create_guid(), v2.indices_);
                this->emplace_back(tac(op, v2, v1, result));
                this->add_variable(result);
+               autogen_permutation perm; 
+               perm.utype_ = 'd';
+               perm.permutation_ = find_permutation(v1.indices_, v2.indices_);
+               std::string name = "permute_" + permutation_to_string(find_permutation(v1.indices_, v2.indices_));
+               this->autofunc_table_.emplace(name, {});
                break;
             }
             case ast::op_mult:
@@ -457,6 +473,9 @@ namespace tcg
       bool compiler::operator()(const ast::function_definition& x, intermediate_program& prog) const
       {
          tac_function f(x.name_, &prog.symbol_table_);
+         if(x.optional_)
+            f.optional_ = *x.optional_;
+
          if(!(*this)(x.body_, f.program_))
          {
             return false;

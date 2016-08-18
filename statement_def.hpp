@@ -15,6 +15,33 @@ namespace tcg
    namespace parser
    {
       /***************************************************************************
+       * Keywords
+       ***************************************************************************/
+      struct function_symbols:
+         x3::annotate_on_success
+       , x3::symbols<ast::functoken> 
+      {
+      };
+
+      function_symbols function_optionals;
+      
+      /*!
+       * add keywords
+       */
+      void add_keywords_statement()
+      {
+         // only allow one call
+         static bool once = false;
+         if(once) return;
+         once = true;
+
+         // equality operators
+         function_optionals.add
+            ("cuda", ast::func_cuda)
+            ;
+      }
+
+      /***************************************************************************
        * Statement grammar
        ***************************************************************************/
       struct statement_list_class;
@@ -100,6 +127,11 @@ namespace tcg
          = x3::lit("function")
          > identifier
          > x3::lit("()")
+         > -( x3::lit("[")
+            //> (function_optionals >> identifier)
+            > (function_optionals)
+            > x3::lit("]")
+            )
          > block
          ;
 
@@ -131,6 +163,7 @@ namespace tcg
 {   
    parser::statement_type const& statement()
    {
+      parser::add_keywords_statement();
       return parser::statement;
    }
 }

@@ -3,6 +3,7 @@
 
 #include <functional>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 #include <tuple>
@@ -51,6 +52,21 @@ namespace tcg
       /***************************************************************************
        * Symbol table
        ***************************************************************************/
+      inline std::string utype(char u)
+      {
+         std::string type;
+         switch(u)
+         {
+            case 'f': type += "float" ; break;
+            case 'd': type += "double"; break;
+            case 'c': type += "std::complex<float>" ; break;
+            case 'z': type += "std::complex<double>"; break;
+            case 'i': type += "int"; break;
+            default: BOOST_ASSERT(0);
+         }
+         return type;
+      }
+
       struct symbol
       {  
          std::string name_;
@@ -109,6 +125,24 @@ namespace tcg
 
          std::map<std::string, symbol> symbols_;
          symbol_table* enclosing_table_ = nullptr;
+      };
+
+      struct autogen_permutation
+      {
+         permutation_type permutation_;
+         char utype_;
+      };
+
+      struct autogen_function:
+         x3::variant
+            < autogen_permutation
+            >
+      {
+      };
+
+      struct autogen_function_table :
+         std::map<std::string, autogen_function>
+      {
       };
 
       /***************************************************************************
@@ -206,11 +240,12 @@ namespace tcg
 
          std::stack<tac_variable> variable_stack_;
          symbol_table symbol_table_;
+         autogen_function_table autofunc_table_;
       };
       
       struct tac_function
       {
-         tac_function(const std::string& name, symbol_table* prev)
+         tac_function(const std::string& name = "", symbol_table* prev = nullptr)
             : name_(name)
             , program_(prev)
          {
@@ -218,6 +253,7 @@ namespace tcg
 
          std::string name_;
          intermediate_program program_;
+         ast::functoken optional_ = ast::func_standard;
       };
 
       inline std::ostream& operator<<(std::ostream& os, const intermediate_program& t)
@@ -252,6 +288,8 @@ namespace tcg
       bool is_unit_permutation(const permutation_type&);
 
       multi_index_type create_permuted_indices(const multi_index_type&, const permutation_type&);
+
+      std::string permutation_to_string(const permutation_type&);
 
 
       /***************************************************************************

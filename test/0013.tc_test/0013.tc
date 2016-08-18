@@ -1,0 +1,4 @@
+function func1()
+{
+   A[ij] = B[ji] - (C[ij] + D[ji]) - E[ji];
+}

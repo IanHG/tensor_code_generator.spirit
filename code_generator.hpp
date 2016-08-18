@@ -2,12 +2,35 @@
 #define TCG_CODE_GENERATOR_HPP_INCLUDED
 
 #include <fstream>
+#include <iostream>
 #include "compiler.hpp"
 
 namespace tcg
 {
    namespace code_gen
    {
+      struct tab
+      {
+         std::string tab_ = "";
+
+         void push()
+         {
+            tab_ += "   ";
+         }
+
+         void pop()
+         {
+            if(tab_.size() >= 3)
+               tab_.erase(tab_.end() - 3, tab_.end());
+         }
+      };
+
+      inline std::ostream& operator<<(std::ostream& os, const tab& t)
+      {
+         os << t;
+         return os;
+      }
+
       struct code_generator
       {
          //!
@@ -34,9 +57,13 @@ namespace tcg
          void write_assignment(const tac&) const;
          void write_contraction(const tac&) const;
          
+
          //!
          void operator()(const tac&) const;
          void operator()(const tac_function&) const;
+         
+         //!
+         void operator()(const autogen_permutation& t) const;
 
          //!
          void initialize_files() const;
@@ -49,6 +76,7 @@ namespace tcg
          mutable std::list<tac_variable> allocation_table_;
 
          mutable std::string size_var_ = "";
+         mutable tab tab_;
       };
    }
 } /* namespace tcg */

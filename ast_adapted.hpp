@@ -46,7 +46,7 @@ BOOST_FUSION_ADAPT_STRUCT
 
 BOOST_FUSION_ADAPT_STRUCT
    ( tcg::ast::function_definition
-   , name_, body_
+   , name_, optional_, body_
    )
 
 #endif /* TCG_AST_ADAPTED_H_INCLUDED */

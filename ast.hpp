@@ -69,6 +69,12 @@ namespace tcg
       , op_not
       };
 
+      enum functoken
+      { func_standard
+      , func_cuda
+      , func_upc
+      };
+
       struct unary
       {
          optoken operator_;
@@ -145,8 +151,14 @@ namespace tcg
       struct function_definition
       {
          std::string name_;
+         boost::optional<functoken> optional_;
          statement body_;
       };
+
+      //struct function_optional
+      //{
+      //   std::list<std::string> 
+      //}
 
    } /* namespace ast */
 } /* namespace tcg */
