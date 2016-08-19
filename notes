@@ -1,0 +1,11 @@
+things to be done:
+   1) clean up!!
+      a) generally nothing is really pretty, design needs a major update!
+      b) clean up language
+      c) clean up parser
+   2) add fortran generator
+   3) add optimizer
+   4) add automatically generated comments (and a keyword to disable)
+   5) expand typesystem (so float code can also be generated, now it is more or less hardcoded to double)
+      a) add possibility to also use smaller integers/unsigned
+   6) add cuda generator!
