@@ -182,16 +182,10 @@ namespace tcg
       {
          assert(m.size() == p.size());
          multi_index_type permuted_indices;
-         //std::cout << " CREATE PERMUTED INDICES " << std::endl;
-         //std::cout << m << std::endl;
-         //std::cout << p << std::endl;
          for(const auto& i : p)
          {
-            //std::cout << i << " " << m[i] << std::endl;
             permuted_indices.emplace_back(m[i]);
          }
-         //std::cout << permuted_indices << std::endl;
-         //std::cout << " ======================== " << std::endl;
          return permuted_indices;
       }
 
@@ -248,11 +242,14 @@ namespace tcg
                auto result = tac_variable(tensor_intermed::create_guid(), v2.indices_);
                this->emplace_back(tac(op, v2, v1, result));
                this->add_variable(result);
-               autogen_permutation perm; 
-               perm.utype_ = 'd';
-               perm.permutation_ = find_permutation(v1.indices_, v2.indices_);
-               std::string name = "permute_" + permutation_to_string(find_permutation(v1.indices_, v2.indices_));
-               this->autofunc_table_.emplace(name, {});
+               permutation_type permutation = find_permutation(v1.indices_, v2.indices_);
+               if(!is_unit_permutation(permutation))
+               {
+                  autogen_permutation perm; 
+                  perm.utype_ = 'd';
+                  perm.permutation_ = permutation;
+                  this->autofunc_table_.insert(perm);
+               }
                break;
             }
             case ast::op_mult:
@@ -264,6 +261,39 @@ namespace tcg
                auto result = tac_variable(tensor_intermed::create_guid(), result_indices);
                this->emplace_back(tac(op, v2, v1, result));
                this->add_variable(result);
+               
+               auto overlap_indices = find_overlapping_indices(v1.indices_, v2.indices_);
+               auto arg1_remaining_indices = remove_indices(v1.indices_, overlap_indices);
+               auto arg2_remaining_indices = remove_indices(v2.indices_, overlap_indices);
+      
+               auto arg1_indices = catenate(overlap_indices, arg1_remaining_indices);
+               auto arg2_indices = catenate(arg2_remaining_indices, overlap_indices);
+
+               auto arg1_permutation = find_permutation(v1.indices_, arg1_indices);
+               auto arg2_permutation = find_permutation(v2.indices_, arg2_indices);
+               
+               std::cout << " v1 indices " << v1.indices_ << std::endl;
+               std::cout << " v2 indices " << v2.indices_ << std::endl;
+               std::cout << " arg1_indices << " << arg1_indices << std::endl;
+               std::cout << " arg2_indices << " << arg2_indices << std::endl;
+               std::cout << " result indices " << result_indices << std::endl;
+               std::cout << " arg1 perm " << arg1_permutation << std::endl;
+               std::cout << " arg2 perm " << arg2_permutation << std::endl;
+               if(!is_unit_permutation(arg1_permutation)) 
+               {
+                  autogen_permutation perm; 
+                  perm.utype_ = 'd';
+                  perm.permutation_ = arg1_permutation;
+                  this->autofunc_table_.insert(perm);
+               }
+               if(!is_unit_permutation(arg2_permutation)) 
+               {
+                  autogen_permutation perm; 
+                  perm.utype_ = 'd';
+                  perm.permutation_ = arg2_permutation;
+                  this->autofunc_table_.insert(perm);
+               }
+
                break;
             }
             case ast::op_equal:
@@ -272,6 +302,14 @@ namespace tcg
                auto v2 = variable_stack_.top(); variable_stack_.pop();
                if(!is_permutation(v1.indices_, v2.indices_)) BOOST_ASSERT(0);
                this->emplace_back(tac(op, v2, tac_variable(), v1));
+               permutation_type permutation = find_permutation(v2.indices_, v1.indices_);
+               if(!is_unit_permutation(permutation))
+               {
+                  autogen_permutation perm; 
+                  perm.utype_ = 'd';
+                  perm.permutation_ = permutation;
+                  this->autofunc_table_.insert(perm);
+               }
                break;
             }
             default: 
@@ -481,6 +519,21 @@ namespace tcg
             return false;
          }
          prog.emplace_back(f);
+         return true;
+      }
+      
+      bool compiler::operator()(const ast::autogen_statement& x, intermediate_program& prog) const
+      {
+         std::vector<int> perm_int(x.permutation_.size());
+         for(int i = 0; i < perm_int.size(); ++i)
+         {
+            std::cout << x.permutation_[i] << std::endl;
+            perm_int[i] = x.permutation_[i] - '0';
+         }
+         autogen_permutation perm;
+         perm.utype_ = 'd';
+         perm.permutation_ = perm_int;
+         prog.autofunc_table_.insert(perm);
          return true;
       }
 

@@ -112,6 +112,7 @@ namespace tcg
       struct while_statement;
       struct statement_list;
       struct function_definition;
+      struct autogen_statement;
 
       struct statement
        : x3::variant
@@ -121,6 +122,7 @@ namespace tcg
          , x3::forward_ast<while_statement>
          , x3::forward_ast<statement_list>
          , x3::forward_ast<function_definition>
+         , x3::forward_ast<autogen_statement>
          //, boost::recursive_wrapper<if_statement>
          //, boost::recursive_wrapper<while_statement>
          //, boost::recursive_wrapper<statement_list>
@@ -153,6 +155,11 @@ namespace tcg
          std::string name_;
          boost::optional<functoken> optional_;
          statement body_;
+      };
+
+      struct autogen_statement
+      {
+         std::vector<char> permutation_;
       };
 
       //struct function_optional

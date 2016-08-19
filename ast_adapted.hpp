@@ -49,4 +49,9 @@ BOOST_FUSION_ADAPT_STRUCT
    , name_, optional_, body_
    )
 
+BOOST_FUSION_ADAPT_STRUCT
+   ( tcg::ast::autogen_statement
+   , permutation_
+   )
+
 #endif /* TCG_AST_ADAPTED_H_INCLUDED */

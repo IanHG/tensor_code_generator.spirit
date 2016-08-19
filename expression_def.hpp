@@ -75,6 +75,7 @@ namespace tcg
 
          //
          keywords.add
+            ("autogenerate")
             ("var")
             ("while")
             ("if")

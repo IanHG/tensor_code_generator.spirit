@@ -23,7 +23,9 @@ namespace tcg
       {
       };
 
-      function_symbols function_optionals;
+      function_symbols                function_optionals;
+      x3::symbols<>  autogen_function;
+
       
       /*!
        * add keywords
@@ -35,7 +37,13 @@ namespace tcg
          if(once) return;
          once = true;
 
-         // equality operators
+         //
+         autogen_function.add
+            ("permute")
+            ;
+
+
+         // 
          function_optionals.add
             ("cuda", ast::func_cuda)
             ;
@@ -53,6 +61,7 @@ namespace tcg
       struct if_statement_class;
       struct while_statement_class;
       struct function_definition_class;
+      struct autogen_statement_class;
 
       using statement_list_type       = x3::rule<statement_list_class, ast::statement_list>;
       using statement_explicit_type   = x3::rule<statement_explicit_class, ast::statement>;
@@ -63,6 +72,7 @@ namespace tcg
       using if_statement_type         = x3::rule<if_statement_class, ast::if_statement>;
       using while_statement_type      = x3::rule<while_statement_class, ast::while_statement>;
       using function_definition_type  = x3::rule<function_definition_class, ast::function_definition>;
+      using autogen_statement_type    = x3::rule<autogen_statement_class, ast::autogen_statement>;
       
       statement_type const statement("statement");
       statement_list_type const statement_list("statement_list");
@@ -74,6 +84,7 @@ namespace tcg
       if_statement_type const if_statement("if_statement");
       while_statement_type const while_statement("while_statement");
       function_definition_type const function_definition("function_definition");
+      autogen_statement_type const autogen_statement("autogen_statement");
 
       // Import the expression rule
       namespace { auto const& expression = tcg::expression(); }
@@ -83,7 +94,7 @@ namespace tcg
          ;
 
       auto const statement_explicit_def
-         = (function_definition | while_statement | if_statement | variable_declaration | assignment)
+         = (function_definition | autogen_statement | while_statement | if_statement | variable_declaration | assignment)
          ;
 
       auto const variable_declaration_def
@@ -135,6 +146,13 @@ namespace tcg
          > block
          ;
 
+      auto const autogen_statement_def
+         = x3::lit("autogenerate")
+         > autogen_function
+         > +(x3::digit)
+         > ";"
+         ;
+
       auto const variable_def = tensor_litteral | identifier;
       auto const statement_def = statement_list;
       
@@ -149,6 +167,7 @@ namespace tcg
          , block
          , variable
          , function_definition
+         , autogen_statement
          );  
       
       struct function_class : error_handler_base, x3::annotate_on_success {};

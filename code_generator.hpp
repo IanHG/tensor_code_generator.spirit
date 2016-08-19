@@ -27,7 +27,7 @@ namespace tcg
 
       inline std::ostream& operator<<(std::ostream& os, const tab& t)
       {
-         os << t;
+         os << t.tab_;
          return os;
       }
 

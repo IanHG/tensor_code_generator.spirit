@@ -133,16 +133,32 @@ namespace tcg
          char utype_;
       };
 
-      struct autogen_function:
-         x3::variant
-            < autogen_permutation
-            >
+      inline bool operator<(const autogen_permutation& p1, const autogen_permutation& p2)
       {
-      };
+         return p1.permutation_ < p2.permutation_;
+      }
 
-      struct autogen_function_table :
-         std::map<std::string, autogen_function>
+      //struct autogen_function:
+      //   x3::variant
+      //      < autogen_permutation
+      //      >
+      //{
+      //};
+
+      //bool operator==(const autogen_function& f1, const autogen_function& f2)
+      //{
+      //   return false;
+      //}
+
+      struct autogen_function_table
       {
+         void insert(const autogen_permutation& f)
+         {
+            std::cout << " insert ! " << std::endl;
+            autogen_functions_.emplace(f);
+         }
+
+         std::set<autogen_permutation> autogen_functions_;
       };
 
       /***************************************************************************
@@ -367,6 +383,7 @@ namespace tcg
          bool operator()(const ast::if_statement& x, intermediate_program& prog) const;
          bool operator()(const ast::while_statement& x, intermediate_program& prog) const;
          bool operator()(const ast::function_definition& x, intermediate_program& prog) const;
+         bool operator()(const ast::autogen_statement& x, intermediate_program& prog) const;
 
          //! start compilation
          bool start(const ast::statement_list& x) const;

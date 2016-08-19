@@ -266,68 +266,76 @@ namespace tcg
          ofcpp_ << "/**************************************** " << new_line()
                 << " * PERMUTATION CODE " << new_line()
                 << " ****************************************/" << new_line();
-         ofcpp_ << "{" << new_line();
-         // start for loops
-         for(char idx : arg.indices_)
+         auto permutation = find_permutation(arg.indices_, permuted_arg.indices_);
+         std::string permutation_name = "permute_" + permutation_to_string(permutation);
+         ofcpp_ << permutation_name << "(" << arg.name_ << ", " << permuted_arg.name_;
+         for(int i = 0; i < arg.indices_.size(); ++i)
          {
-            ofcpp_ << "for(int i" << idx << " = 0" << "; i" << idx << " < " << idx << "; ++i" << idx << ")" << new_line()
-                << "{" << new_line();
+            ofcpp_ << ", " << arg.indices_[i];
          }
+         ofcpp_ << ");" << new_line() << new_line();
+         //ofcpp_ << "{" << new_line();
+         //// start for loops
+         //for(char idx : arg.indices_)
+         //{
+         //   ofcpp_ << "for(int i" << idx << " = 0" << "; i" << idx << " < " << idx << "; ++i" << idx << ")" << new_line()
+         //       << "{" << new_line();
+         //}
 
-         // arg idx
-         ofcpp_ << "int arg_idx = ";
-         if(arg.indices_.size() > 0)
-         {
-            ofcpp_ << "i" << arg.indices_[0];
-            for(size_t i = 1; i < arg.indices_.size(); ++i)
-            {
-               ofcpp_ << " + i" << arg.indices_[i];
-               if(i > 0)
-               {
-                  for(int j = i - 1; j >= 0; --j)
-                  {
-                     ofcpp_ << "*" << arg.indices_[j];
-                  }
-               }
-            }
-         }
-         else
-         {
-            ofcpp_ << "0";
-         }
-         ofcpp_ << ";" << new_line();
+         //// arg idx
+         //ofcpp_ << "int arg_idx = ";
+         //if(arg.indices_.size() > 0)
+         //{
+         //   ofcpp_ << "i" << arg.indices_[0];
+         //   for(size_t i = 1; i < arg.indices_.size(); ++i)
+         //   {
+         //      ofcpp_ << " + i" << arg.indices_[i];
+         //      if(i > 0)
+         //      {
+         //         for(int j = i - 1; j >= 0; --j)
+         //         {
+         //            ofcpp_ << "*" << arg.indices_[j];
+         //         }
+         //      }
+         //   }
+         //}
+         //else
+         //{
+         //   ofcpp_ << "0";
+         //}
+         //ofcpp_ << ";" << new_line();
 
-         // permuted idx
-         ofcpp_ << "int permuted_idx = ";
-         if(permuted_arg.indices_.size() > 0)
-         {
-            ofcpp_ << "i" << permuted_arg.indices_[0];
-            for(size_t i = 1; i < permuted_arg.indices_.size(); ++i)
-            {
-               ofcpp_ << " + i" << permuted_arg.indices_[i];
-               if(i > 0)
-               {
-                  for(int j = i - 1; j >= 0; --j)
-                  {
-                     ofcpp_ << "*" << permuted_arg.indices_[j];
-                  }
-               }
-            }
-         }
-         else
-         {
-            ofcpp_ << "0";
-         }
-         ofcpp_ << ";" << new_line();
+         //// permuted idx
+         //ofcpp_ << "int permuted_idx = ";
+         //if(permuted_arg.indices_.size() > 0)
+         //{
+         //   ofcpp_ << "i" << permuted_arg.indices_[0];
+         //   for(size_t i = 1; i < permuted_arg.indices_.size(); ++i)
+         //   {
+         //      ofcpp_ << " + i" << permuted_arg.indices_[i];
+         //      if(i > 0)
+         //      {
+         //         for(int j = i - 1; j >= 0; --j)
+         //         {
+         //            ofcpp_ << "*" << permuted_arg.indices_[j];
+         //         }
+         //      }
+         //   }
+         //}
+         //else
+         //{
+         //   ofcpp_ << "0";
+         //}
+         //ofcpp_ << ";" << new_line();
 
-         ofcpp_ << permuted_arg.name_ << "[permuted_idx] " << op_as_string(op) << " " << arg.name_ << "[arg_idx];" << new_line();
+         //ofcpp_ << permuted_arg.name_ << "[permuted_idx] " << op_as_string(op) << " " << arg.name_ << "[arg_idx];" << new_line();
 
-         // end for loops
-         for(size_t i = 0; i < arg.indices_.size(); ++i)
-         {
-            ofcpp_ << "}" << new_line();
-         }
-         ofcpp_ << "}" << new_line();
+         //// end for loops
+         //for(size_t i = 0; i < arg.indices_.size(); ++i)
+         //{
+         //   ofcpp_ << "}" << new_line();
+         //}
+         //ofcpp_ << "}" << new_line();
       }
 
 
@@ -394,6 +402,11 @@ namespace tcg
        */
       void code_generator::operator()(const tac_function& t) const
       {
+         for(const auto& line : t.program_.autofunc_table_.autogen_functions_)
+         {
+            this->operator()(line);
+         }
+
          std::stringstream arguments;
          for(const auto& arg : t.program_.symbol_table_.symbols_)
          {
@@ -444,7 +457,7 @@ namespace tcg
                 << "(" 
                 << utype(t.utype_) << "* a, "
                 << utype(t.utype_) << "* pa";
-         for(size_t i = 0; i < size; ++i)
+         for(int i = 0; i < size; ++i)
          {
             ofcpp_ << ", int " << idx;
             indices.emplace_back(idx);
@@ -454,37 +467,39 @@ namespace tcg
          
          // function implementation
          ofcpp_ << "{" << new_line();
-         for(size_t i = 0; i < size; ++i)
+         for(int i = 0; i < size; ++i)
          {
-            int idx = size - 1 - i;
+            int idx = t.permutation_[size - 1 - i];
+            tab_.push();
             ofcpp_ << tab_ << "for(int " << indices[idx] << indices[idx] << " = 0; " 
                                          << indices[idx] << indices[idx] << " < " << indices[idx] << "; "
                                          << "++" << indices[idx] << indices[idx] 
                            << ")" << new_line()
                    << tab_ << "{" << new_line();
-            tab_.push();
          }
+         tab_.push();
          // index calc
          ofcpp_ << tab_ << "int index = ";
-         for(size_t i = 0; i < size; ++i)
+         for(int i = 0; i < size; ++i)
          {
             ofcpp_ << indices[i] << indices[i];
-            for(size_t j = i; j >= 0; --j)
+            for(int j = i - 1; j >= 0; --j)
             {
                ofcpp_ << "*" << indices[j];
             }
-            ofcpp_ << " + ";
+            if(i != (size - 1)) ofcpp_ << " + ";
          }
          ofcpp_ << ";" << new_line();
          // index calc end
          ofcpp_ << tab_ << "*(pa++) = a[index];" << new_line();
-
-         for(size_t i = 0; i < size; ++i)
+         
+         tab_.pop();
+         for(int i = 0; i < size; ++i)
          {
-            tab_.pop();
             ofcpp_ << tab_ << "}" << new_line();
+            tab_.pop();
          }
-         ofcpp_ << "}" << new_line();
+         ofcpp_ << "}" << new_line() << new_line();
       }
 
       /*!
@@ -522,9 +537,11 @@ namespace tcg
          initialize_files();
 
          // autogenerated functions
-         for(const auto& line : t.autofunc_table_)
+         for(const auto& line : t.autofunc_table_.autogen_functions_)
          {
-            boost::apply_visitor(*this, line.second);
+            std::cout << " printing! " << std::endl;
+            //boost::apply_visitor(*this, line);
+            this->operator()(line);
          }
 
          for(const auto& line : t)
