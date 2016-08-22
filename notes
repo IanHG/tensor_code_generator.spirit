@@ -9,3 +9,4 @@ things to be done:
    5) expand typesystem (so float code can also be generated, now it is more or less hardcoded to double)
       a) add possibility to also use smaller integers/unsigned
    6) add cuda generator!
+   7) add a smart tabulator to code generator

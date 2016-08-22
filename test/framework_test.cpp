@@ -22,6 +22,7 @@ int main()
    while(std::getline(ifs, str))
    {
       std::cout << "*----------------------------- " + str + " -----------------------------*" << std::endl;
+      bool partial_success = true;
       int return_value;
       std::string dir = str + ".tc_test";
       
@@ -34,7 +35,7 @@ int main()
       return_value = std::system(tcg_command.c_str());
       if(return_value)
       {
-         success = false;
+         partial_success = false;
       }
       
       // compile tc
@@ -43,7 +44,7 @@ int main()
       if(return_value)
       {
          std::cout << " compilation failed : " << str << std::endl;
-         success = false;
+         partial_success = false;
       }
 
       // run tc
@@ -52,16 +53,16 @@ int main()
       if(return_value)
       {
          std::cout << " tc run failed : " << str << std::endl;
-         success = false;
+         partial_success = false;
       }
 
       // output
       std::cout << "******************************************************************" << std::endl;
-      std::cout << "* " << str << " " << (success ? " ! SUCCESS ! " : " ! FAILED ! ") << std::endl;
+      std::cout << "* " << str << " " << (partial_success ? " ! SUCCESS ! " : " ! FAILED ! ") << std::endl;
       std::cout << "******************************************************************" << std::endl << std::endl;
       
       // clean-up
-      if(success && cleanup)
+      if(partial_success && cleanup)
       {
          auto rm_command = "rm " + str + "_generated.cpp " + str + "_generated.hpp main";
          return_value = std::system(rm_command.c_str());
@@ -70,6 +71,7 @@ int main()
 
       // change back to 'main' dir
       return_value = chdir("..");
+      success = success && partial_success;
       //return_value = std::system("pwd");
    }
    
